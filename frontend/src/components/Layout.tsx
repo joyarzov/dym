@@ -13,7 +13,7 @@ const baseNav = [
   { to: '/vehiculos', label: 'Vehículos', icon: Car },
   { to: '/en-taller', label: 'En taller', icon: LayoutGrid },
   { to: '/clientes', label: 'Clientes', icon: Users },
-  { to: '/piezas', label: 'Piezas', icon: Wrench },
+  { to: '/piezas', label: 'Piezas y servicios', icon: Wrench },
   { to: '/pagos', label: 'Pagos', icon: DollarSign },
   { to: '/proveedores', label: 'Proveedores', icon: Truck },
   { to: '/reportes', label: 'Reportes', icon: BarChart3 },

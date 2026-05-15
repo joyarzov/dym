@@ -108,7 +108,7 @@ export default function VehiculoDetalle() {
       <Tabs defaultValue="info">
         <TabsList className="flex w-full flex-wrap">
           <TabsTrigger value="info">Información</TabsTrigger>
-          <TabsTrigger value="piezas">Piezas ({v.piezas?.length || 0})</TabsTrigger>
+          <TabsTrigger value="piezas">Piezas y servicios ({(v.piezas?.length || 0) + (v.manoObra?.length || 0)})</TabsTrigger>
           <TabsTrigger value="pagos">Pagos ({v.pagos?.length || 0})</TabsTrigger>
           <TabsTrigger value="fotos">Fotos ({v.fotos?.length || 0})</TabsTrigger>
           <TabsTrigger value="historial">Historial ({v.historial?.length || 0})</TabsTrigger>
@@ -146,26 +146,64 @@ export default function VehiculoDetalle() {
         </TabsContent>
 
         <TabsContent value="piezas">
-          <Card><CardContent className="p-6">
-            <Table>
-              <TableHeader><TableRow>
-                <TableHead>Pieza</TableHead><TableHead>Tipo</TableHead><TableHead>Cant.</TableHead>
-                <TableHead>Costo</TableHead><TableHead>Proveedor</TableHead><TableHead>Estado</TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {v.piezas?.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-medium">{p.nombre_pieza}</TableCell>
-                    <TableCell>{p.tipo_trabajo}</TableCell>
-                    <TableCell>{p.cantidad}</TableCell>
-                    <TableCell>{formatMoney(p.costo_total)}</TableCell>
-                    <TableCell>{p.proveedor_nombre || '-'}</TableCell>
-                    <TableCell><Badge variant="outline">{p.estado}</Badge></TableCell>
-                  </TableRow>
-                ))}
-                {!v.piezas?.length && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-4">Sin piezas registradas</TableCell></TableRow>}
-              </TableBody>
-            </Table>
+          <Card><CardContent className="p-4 sm:p-6 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm text-muted-foreground">Detalle de la cotización de esta orden de trabajo.</p>
+              <Link to={`/vehiculos/${id}/cotizacion`}>
+                <Button variant="outline" size="sm"><FileText className="mr-2 h-4 w-4" />Ver / editar cotización</Button>
+              </Link>
+            </div>
+            {(() => {
+              const piezas = v.piezas || [];
+              const servicios = v.manoObra || [];
+              const subPiezas = piezas.reduce((s, p) => s + Number(p.costo_total || 0), 0);
+              const subServ = servicios.reduce((s, m) => s + Number(m.valor || 0), 0);
+              const neto = subPiezas + subServ;
+              const iva = Math.round(neto * 0.19);
+              const total = neto + iva;
+              if (!piezas.length && !servicios.length) {
+                return <p className="py-6 text-center text-muted-foreground">Sin ítems en la cotización</p>;
+              }
+              return (
+                <div className="overflow-x-auto">
+                  <Table className="min-w-[640px]">
+                    <TableHeader><TableRow>
+                      <TableHead>Ítem</TableHead><TableHead>Tipo</TableHead><TableHead className="text-right">Cant.</TableHead>
+                      <TableHead className="text-right">Valor unit.</TableHead><TableHead className="text-right">Total</TableHead>
+                    </TableRow></TableHeader>
+                    <TableBody>
+                      {piezas.map((p) => (
+                        <TableRow key={`p-${p.id}`}>
+                          <TableCell className="font-medium">{p.nombre_pieza}</TableCell>
+                          <TableCell><Badge variant="outline">{p.tipo_trabajo}</Badge></TableCell>
+                          <TableCell className="text-right tabular-nums">{p.cantidad}</TableCell>
+                          <TableCell className="text-right tabular-nums">{formatMoney(p.costo_unitario)}</TableCell>
+                          <TableCell className="text-right tabular-nums">{formatMoney(p.costo_total)}</TableCell>
+                        </TableRow>
+                      ))}
+                      {servicios.map((m) => (
+                        <TableRow key={`m-${m.id}`}>
+                          <TableCell className="font-medium">{m.descripcion}</TableCell>
+                          <TableCell><Badge variant="outline">Servicio / mano de obra</Badge></TableCell>
+                          <TableCell className="text-right tabular-nums">1</TableCell>
+                          <TableCell className="text-right tabular-nums">{formatMoney(m.valor)}</TableCell>
+                          <TableCell className="text-right tabular-nums">{formatMoney(m.valor)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  <div className="mt-4 flex justify-end">
+                    <div className="w-full max-w-xs space-y-1.5 text-sm">
+                      <div className="flex justify-between"><span className="text-muted-foreground">Subtotal piezas</span><span className="tabular-nums">{formatMoney(subPiezas)}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Subtotal servicios</span><span className="tabular-nums">{formatMoney(subServ)}</span></div>
+                      <div className="flex justify-between border-t border-border pt-1.5"><span className="text-muted-foreground">Neto</span><span className="tabular-nums">{formatMoney(neto)}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">IVA (19%)</span><span className="tabular-nums">{formatMoney(iva)}</span></div>
+                      <div className="flex justify-between border-t border-border pt-1.5 text-base font-semibold"><span>Total (= presupuesto)</span><span className="tabular-nums">{formatMoney(total)}</span></div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </CardContent></Card>
         </TabsContent>
 

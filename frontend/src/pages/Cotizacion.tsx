@@ -242,7 +242,7 @@ export default function Cotizacion() {
             <form onSubmit={addMo} className="flex flex-wrap items-end gap-3">
               <div className="min-w-40 flex-1 space-y-1">
                 <label className="text-xs text-muted-foreground">Trabajo</label>
-                <Input value={mo.descripcion} onChange={(e) => setMo({ ...mo, descripcion: e.target.value })} placeholder="Ej: Desabolladura y pintura puerta delantera" />
+                <Input value={mo.descripcion} onChange={(e) => setMo({ ...mo, descripcion: e.target.value })} placeholder="Ej: Cambio de pastillas de freno / mano de obra" />
               </div>
               <div className="w-40 space-y-1">
                 <label className="text-xs text-muted-foreground">Valor (CLP)</label>
@@ -262,7 +262,7 @@ export default function Cotizacion() {
               <LogoMark className="h-12 w-12" />
               <div>
                 <p className="font-heading text-lg font-semibold">{cot.empresa}</p>
-                <p className="text-sm text-muted-foreground">Desabolladura y pintura automotriz</p>
+                <p className="text-sm text-muted-foreground">Gestión de taller</p>
               </div>
             </div>
             <div className="text-right text-sm">

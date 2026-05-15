@@ -38,7 +38,7 @@ async function buildCotizacion(vehiculoId) {
   const total = neto + iva;
 
   return {
-    empresa: config.empresa_nombre || 'DyM - Desabolladura y Pintura',
+    empresa: config.empresa_nombre || 'DyM Taller',
     fecha: new Date().toISOString().slice(0, 10),
     vehiculo: vehRows[0],
     piezas,

@@ -73,7 +73,7 @@ export default function Piezas() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Piezas</h1>
+        <h1 className="text-2xl font-bold">Piezas y servicios</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger render={<Button><Plus className="h-4 w-4 mr-2" />Nueva Pieza</Button>} />
           <DialogContent>

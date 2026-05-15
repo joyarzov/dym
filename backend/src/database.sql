@@ -168,6 +168,6 @@ INSERT IGNORE INTO configuracion (clave, valor, descripcion) VALUES
 ('semaforo_amarillo_min', '4', 'Dias minimos para semaforo amarillo'),
 ('semaforo_naranja_min', '1', 'Dias minimos para semaforo naranja'),
 ('semaforo_activo', '1', 'Semaforo activo'),
-('empresa_nombre', 'DyM - Desabolladura y Pintura', 'Nombre empresa'),
+('empresa_nombre', 'DyM Taller', 'Nombre empresa'),
 ('monto_requiere_anticipo', '1300000', 'Monto minimo que requiere anticipo'),
 ('porcentaje_anticipo', '50', 'Porcentaje de anticipo');

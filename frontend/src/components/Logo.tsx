@@ -41,7 +41,7 @@ export function Logo({
         </div>
         {subtitle && (
           <div className="mt-1 text-xs text-muted-foreground">
-            Desabolladura y pintura
+            Gestión de taller
           </div>
         )}
       </div>

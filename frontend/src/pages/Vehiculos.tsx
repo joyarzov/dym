@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '@/lib/api';
 import type { Vehiculo } from '@/lib/types';
 import { ESTADOS, formatDate, formatMoney } from '@/lib/types';
@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Search, Eye } from 'lucide-react';
 
 export default function Vehiculos() {
+  const navigate = useNavigate();
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
   const [search, setSearch] = useState('');
   const [estado, setEstado] = useState('');
@@ -64,7 +65,11 @@ export default function Vehiculos() {
             </TableHeader>
             <TableBody>
               {vehiculos.map((v) => (
-                <TableRow key={v.id}>
+                <TableRow
+                  key={v.id}
+                  onClick={() => navigate(`/vehiculos/${v.id}`)}
+                  className="cursor-pointer hover:bg-muted/50"
+                >
                   <TableCell className="font-bold">{v.patente}</TableCell>
                   <TableCell>{v.cliente_nombre}</TableCell>
                   <TableCell>{v.marca} {v.modelo} {v.anio}</TableCell>

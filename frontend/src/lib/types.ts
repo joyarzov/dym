@@ -78,6 +78,7 @@ export interface Vehiculo {
   fotos?: Foto[];
   piezas?: Pieza[];
   pagos?: Pago[];
+  manoObra?: ManoObra[];
   totalPagado?: number;
   historial?: OrdenHistorial[];
   trazabilidad?: TrazaEstado[];

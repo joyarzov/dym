@@ -92,6 +92,7 @@ router.get('/:id', async (req, res) => {
     const [fotos] = await db.query('SELECT * FROM vehiculo_fotos WHERE vehiculo_id = ? ORDER BY created_at', [req.params.id]);
     const [piezas] = await db.query('SELECT p.*, pr.razon_social as proveedor_nombre FROM piezas p LEFT JOIN proveedores pr ON pr.id = p.proveedor_id WHERE p.vehiculo_id = ?', [req.params.id]);
     const [pagos] = await db.query('SELECT * FROM pagos WHERE vehiculo_id = ? ORDER BY fecha_pago DESC', [req.params.id]);
+    const [manoObra] = await db.query('SELECT * FROM mano_obra WHERE vehiculo_id = ? ORDER BY created_at', [req.params.id]);
 
     const totalPagado = pagos.reduce((sum, p) => sum + Number(p.monto), 0);
 
@@ -110,7 +111,7 @@ router.get('/:id', async (req, res) => {
       [req.params.id]
     );
 
-    res.json({ ...rows[0], fotos, piezas, pagos, totalPagado, historial, trazabilidad });
+    res.json({ ...rows[0], fotos, piezas, manoObra, pagos, totalPagado, historial, trazabilidad });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

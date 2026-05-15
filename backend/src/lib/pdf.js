@@ -35,7 +35,7 @@ export function generarCotizacionPDF(cot) {
 
       // Encabezado
       doc.fillColor(amber).fontSize(20).font('Helvetica-Bold').text(cot.empresa, left, 48);
-      doc.fillColor(gray).fontSize(10).font('Helvetica').text('Desabolladura y pintura automotriz', left, 74);
+      doc.fillColor(gray).fontSize(10).font('Helvetica').text('Gestión de taller', left, 74);
 
       doc.fillColor('#111111').fontSize(18).font('Helvetica-Bold').text('COTIZACIÓN', 0, 50, { align: 'right' });
       doc.fillColor(gray).fontSize(10).font('Helvetica')
