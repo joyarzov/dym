@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Pencil, ArrowLeft, ImageIcon, FileText, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
@@ -24,11 +25,19 @@ export default function VehiculoDetalle() {
 
   useEffect(() => { load(); }, [id]);
 
-  async function cambiarEstado(estado: string | null) {
-    if (!estado) return;
-    await api.patch(`/vehiculos/${id}/estado`, { estado });
-    toast.success('Estado actualizado');
-    load();
+  const [pendEstado, setPendEstado] = useState<string | null>(null);
+
+  async function confirmarCambioEstado() {
+    if (!pendEstado) return;
+    try {
+      await api.patch(`/vehiculos/${id}/estado`, { estado: pendEstado });
+      toast.success('Estado actualizado');
+      load();
+    } catch {
+      toast.error('No se pudo cambiar el estado');
+    } finally {
+      setPendEstado(null);
+    }
   }
 
   async function reingresar() {
@@ -79,7 +88,7 @@ export default function VehiculoDetalle() {
           <Select
             items={Object.fromEntries(Object.entries(ESTADOS).map(([k, s]) => [k, s.label]))}
             value={v.estado}
-            onValueChange={(val) => cambiarEstado(val as string)}
+            onValueChange={(val) => { if (val && val !== v.estado) setPendEstado(val as string); }}
           >
             <SelectTrigger className="w-full sm:w-44"><SelectValue /></SelectTrigger>
             <SelectContent>{Object.entries(ESTADOS).map(([k, s]) => <SelectItem key={k} value={k}>{s.label}</SelectItem>)}</SelectContent>
@@ -185,31 +194,54 @@ export default function VehiculoDetalle() {
         </TabsContent>
 
         <TabsContent value="fotos">
-          <Card><CardContent className="p-6">
-            <div className="flex gap-4 mb-4">
-              {(['ingreso', 'proceso', 'entrega'] as const).map((tipo) => (
-                <label key={tipo} className="cursor-pointer">
-                  <span className="inline-flex items-center gap-1 px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-muted transition-colors">
-                    <ImageIcon className="h-4 w-4" />Subir {tipo}
-                  </span>
-                  <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => subirFotos(e.target.files, tipo)} />
-                </label>
-              ))}
-            </div>
-            {v.fotos?.length ? (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {v.fotos.map((f) => (
-                  <div key={f.id} className="relative group">
-                    <img src={f.ruta_foto} alt={f.descripcion} className="rounded-lg w-full h-40 object-cover" />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                      <Button variant="destructive" size="sm" onClick={() => eliminarFoto(f.id)}>Eliminar</Button>
-                    </div>
-                    <Badge className="absolute bottom-2 left-2" variant="outline">{f.tipo}</Badge>
+          <div className="space-y-4">
+            {([
+              { tipo: 'ingreso', label: 'Fotos de ingreso' },
+              { tipo: 'proceso', label: 'Fotos de proceso' },
+              { tipo: 'entrega', label: 'Fotos de entrega' },
+            ] as const).map(({ tipo, label }) => {
+              const fotos = v.fotos?.filter((f) => f.tipo === tipo) || [];
+              return (
+                <Card key={tipo}><CardContent className="p-4 sm:p-6">
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <h3 className="font-semibold">{label} <span className="text-muted-foreground">({fotos.length})</span></h3>
+                    <label className="cursor-pointer">
+                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm transition-colors hover:bg-muted">
+                        <ImageIcon className="h-4 w-4" />Subir
+                      </span>
+                      <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => subirFotos(e.target.files, tipo)} />
+                    </label>
                   </div>
-                ))}
-              </div>
-            ) : <p className="text-center text-muted-foreground py-4">Sin fotos</p>}
-          </CardContent></Card>
+                  {fotos.length ? (
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                      {fotos.map((f) => (
+                        <div key={f.id} className="group relative overflow-hidden rounded-lg border border-border bg-muted">
+                          <a href={f.ruta_foto} target="_blank" rel="noopener noreferrer" title="Ver foto completa">
+                            <img
+                              src={f.ruta_foto}
+                              alt={f.descripcion || label}
+                              loading="lazy"
+                              className="h-48 w-full object-contain"
+                            />
+                          </a>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => eliminarFoto(f.id)}
+                            className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100"
+                          >
+                            Eliminar
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="py-6 text-center text-sm text-muted-foreground">Sin {label.toLowerCase()}</p>
+                  )}
+                </CardContent></Card>
+              );
+            })}
+          </div>
         </TabsContent>
 
         <TabsContent value="historial">
@@ -277,6 +309,22 @@ export default function VehiculoDetalle() {
           </CardContent></Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={Boolean(pendEstado)} onOpenChange={(o) => { if (!o) setPendEstado(null); }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Confirmar cambio de estado</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm">
+            ¿Está seguro que desea cambiar el estado de <span className="font-semibold">{v.patente}</span> a{' '}
+            <span className="font-semibold">«{pendEstado ? ESTADOS[pendEstado as keyof typeof ESTADOS].label : ''}»</span>?
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setPendEstado(null)}>No</Button>
+            <Button onClick={confirmarCambioEstado}>Sí, cambiar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
