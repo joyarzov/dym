@@ -28,23 +28,29 @@ export async function getEmailConfig() {
 
 function resolveTransport(cfg) {
   const provider = cfg.email_provider || 'gmail';
-  let conn = PRESETS[provider];
-  if (!conn) {
-    conn = {
-      host: cfg.email_host,
-      port: Number(cfg.email_port) || 587,
-      secure: cfg.email_secure === '1' || cfg.email_secure === 'true',
-    };
-  }
+  const preset = PRESETS[provider];
+  const conn = preset || {
+    host: cfg.email_host,
+    port: Number(cfg.email_port) || 587,
+    secure: cfg.email_secure === '1' || cfg.email_secure === 'true',
+  };
   if (!conn.host || !cfg.email_user || !cfg.email_pass) {
     throw new Error('La casilla de correo no está configurada');
   }
-  return nodemailer.createTransport({
+  const opts = {
     host: conn.host,
     port: conn.port,
     secure: conn.secure,
     auth: { user: cfg.email_user, pass: cfg.email_pass },
-  });
+  };
+  // SMTP propio (cPanel/Exim, etc.): la conexión sigue cifrada (TLS/STARTTLS)
+  // pero no exigimos que el nombre del certificado coincida, porque en hosting
+  // compartido el cert suele ser del servidor y no del dominio del cliente.
+  if (!preset) {
+    if (conn.port === 587) opts.requireTLS = true;
+    opts.tls = { rejectUnauthorized: false };
+  }
+  return nodemailer.createTransport(opts);
 }
 
 export async function sendMail({ to, subject, text, attachments }) {
