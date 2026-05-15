@@ -14,10 +14,16 @@ import Proveedores from '@/pages/Proveedores';
 import ProveedorForm from '@/pages/ProveedorForm';
 import Reportes from '@/pages/Reportes';
 import Configuracion from '@/pages/Configuracion';
+import Usuarios from '@/pages/Usuarios';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { token } = useAuth();
   return token ? <>{children}</> : <Navigate to="/login" />;
+}
+
+function SuperuserRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  return user?.rol === 'superusuario' ? <>{children}</> : <Navigate to="/" replace />;
 }
 
 export default function App() {
@@ -40,6 +46,7 @@ export default function App() {
         <Route path="proveedores/:id/editar" element={<ProveedorForm />} />
         <Route path="reportes" element={<Reportes />} />
         <Route path="configuracion" element={<Configuracion />} />
+        <Route path="usuarios" element={<SuperuserRoute><Usuarios /></SuperuserRoute>} />
       </Route>
     </Routes>
   );

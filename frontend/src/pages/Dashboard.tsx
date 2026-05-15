@@ -16,13 +16,28 @@ export default function Dashboard() {
     api.get('/dashboard').then((r) => setData(r.data));
   }, []);
 
-  if (!data) return <div className="text-center py-10 text-muted-foreground">Cargando...</div>;
+  if (!data) {
+    return (
+      <div className="space-y-6">
+        <div className="h-8 w-40 animate-pulse rounded-md bg-muted" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-28 animate-pulse rounded-xl bg-muted" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="h-80 animate-pulse rounded-xl bg-muted lg:col-span-2" />
+          <div className="h-80 animate-pulse rounded-xl bg-muted" />
+        </div>
+      </div>
+    );
+  }
 
   const stats = [
-    { label: 'Vehículos en Taller', value: data.enTaller, icon: Car, color: 'text-blue-400' },
-    { label: 'Listos para Entrega', value: data.listos, icon: Flag, color: 'text-green-400' },
-    { label: 'Ingresos del Mes', value: formatMoney(data.ingresosMes), icon: Coins, color: 'text-cyan-400' },
-    { label: 'Pendiente de Cobro', value: formatMoney(data.pendienteCobro), icon: AlertTriangle, color: 'text-red-400' },
+    { label: 'Vehículos en taller', value: data.enTaller, icon: Car, color: 'text-info' },
+    { label: 'Listos para entrega', value: data.listos, icon: Flag, color: 'text-success' },
+    { label: 'Ingresos del mes', value: formatMoney(data.ingresosMes), icon: Coins, color: 'text-primary' },
+    { label: 'Pendiente de cobro', value: formatMoney(data.pendienteCobro), icon: AlertTriangle, color: 'text-destructive' },
   ];
 
   return (
@@ -36,13 +51,15 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
-          <Card key={s.label}>
+          <Card key={s.label} className="transition-colors hover:ring-foreground/20">
             <CardContent className="flex items-center justify-between p-6">
               <div>
-                <p className="text-2xl font-bold">{s.value}</p>
-                <p className="text-sm text-muted-foreground">{s.label}</p>
+                <p className="text-2xl font-semibold tabular-nums tracking-tight">{s.value}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{s.label}</p>
               </div>
-              <s.icon className={`h-8 w-8 ${s.color}`} />
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent">
+                <s.icon className={`h-5 w-5 ${s.color}`} />
+              </div>
             </CardContent>
           </Card>
         ))}

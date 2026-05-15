@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     password VARCHAR(255) NOT NULL,
     nombre_completo VARCHAR(150) NOT NULL,
     email VARCHAR(150),
-    rol ENUM('admin') DEFAULT 'admin',
+    rol ENUM('admin','superusuario') DEFAULT 'admin',
     activo TINYINT(1) DEFAULT 1,
     ultimo_acceso DATETIME,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -119,8 +119,15 @@ CREATE TABLE IF NOT EXISTS configuracion (
     descripcion VARCHAR(200)
 );
 
+-- Migración para bases de datos ya existentes (no-op en instalación nueva)
+ALTER TABLE usuarios MODIFY COLUMN rol ENUM('admin','superusuario') NOT NULL DEFAULT 'admin';
+
 INSERT IGNORE INTO usuarios (username, password, nombre_completo, email, rol)
 VALUES ('admin', '$2b$12$4GyExnbA5G8G.F6EKFYNXOgYA2CJfYy/paAyLQHjRC/7lU0RVJsRK', 'Administrador DyM', 'admin@dym.cl', 'admin');
+
+-- Superusuario: puede crear y administrar usuarios
+INSERT IGNORE INTO usuarios (username, password, nombre_completo, email, rol)
+VALUES ('joyarzo', '$2b$12$F5V7xSU2.u5ITQDylLmzRuDxxQA8Ox7tQP1PwX1vliUtECFcnlf2O', 'José Oyarzo', 'jose.oyarzo.vera@gmail.com', 'superusuario');
 
 INSERT IGNORE INTO configuracion (clave, valor, descripcion) VALUES
 ('semaforo_verde_min', '8', 'Dias minimos para semaforo verde'),

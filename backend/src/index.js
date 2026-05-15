@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { authMiddleware } from './middleware/auth.js';
 import authRoutes from './routes/auth.js';
+import usuariosRoutes from './routes/usuarios.js';
 import clientesRoutes from './routes/clientes.js';
 import proveedoresRoutes from './routes/proveedores.js';
 import vehiculosRoutes from './routes/vehiculos.js';
@@ -23,6 +24,7 @@ app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 app.use('/api/auth', authRoutes);
 
+app.use('/api/usuarios', authMiddleware, usuariosRoutes);
 app.use('/api/dashboard', authMiddleware, dashboardRoutes);
 app.use('/api/clientes', authMiddleware, clientesRoutes);
 app.use('/api/proveedores', authMiddleware, proveedoresRoutes);

@@ -1,9 +1,27 @@
+export type Rol = 'admin' | 'superusuario';
+
 export interface User {
   id: number;
   username: string;
   nombre: string;
-  rol: string;
+  rol: Rol;
 }
+
+export interface Usuario {
+  id: number;
+  username: string;
+  nombre_completo: string;
+  email: string | null;
+  rol: Rol;
+  activo: number;
+  ultimo_acceso: string | null;
+  created_at: string;
+}
+
+export const ROL_LABEL: Record<Rol, string> = {
+  admin: 'Administrador',
+  superusuario: 'Superusuario',
+};
 
 export interface Cliente {
   id: number;
