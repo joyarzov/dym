@@ -5,11 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import EmailConfigDialog from '@/components/EmailConfigDialog';
+import { Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Configuracion() {
   const [config, setConfig] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
 
   useEffect(() => {
     api.get('/configuracion').then((r) => setConfig(r.data));
@@ -33,6 +36,21 @@ export default function Configuracion() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold">Configuración</h1>
+      <Card>
+        <CardHeader><CardTitle>Casilla de correo</CardTitle></CardHeader>
+        <CardContent className="flex items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground">
+            Configura la cuenta (Gmail u Outlook) desde la que se envían las cotizaciones.
+          </p>
+          <Button type="button" variant="outline" onClick={() => setEmailOpen(true)}>
+            <Mail className="mr-2 h-4 w-4" />
+            Configurar
+          </Button>
+        </CardContent>
+      </Card>
+
+      <EmailConfigDialog open={emailOpen} onOpenChange={setEmailOpen} />
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
           <CardHeader><CardTitle>Empresa</CardTitle></CardHeader>

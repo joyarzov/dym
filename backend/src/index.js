@@ -8,6 +8,7 @@ import authRoutes from './routes/auth.js';
 import usuariosRoutes from './routes/usuarios.js';
 import manoObraRoutes from './routes/manoObra.js';
 import cotizacionesRoutes from './routes/cotizaciones.js';
+import emailRoutes from './routes/email.js';
 import clientesRoutes from './routes/clientes.js';
 import proveedoresRoutes from './routes/proveedores.js';
 import vehiculosRoutes from './routes/vehiculos.js';
@@ -37,6 +38,7 @@ app.use('/api/reportes', authMiddleware, reportesRoutes);
 app.use('/api/configuracion', authMiddleware, configuracionRoutes);
 app.use('/api/mano-obra', authMiddleware, manoObraRoutes);
 app.use('/api/cotizaciones', authMiddleware, cotizacionesRoutes);
+app.use('/api/email', authMiddleware, emailRoutes);
 
 const PORT = process.env.API_PORT || 3001;
 app.listen(PORT, () => console.log(`DyM API running on port ${PORT}`));

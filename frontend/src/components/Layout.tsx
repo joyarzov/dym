@@ -2,7 +2,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import {
   LayoutDashboard, Users, Car, Wrench, DollarSign, Truck,
-  BarChart3, Settings, LogOut, Menu, X, ShieldCheck,
+  BarChart3, Settings, LogOut, Menu, X, ShieldCheck, Send,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ const baseNav = [
   { to: '/pagos', label: 'Pagos', icon: DollarSign },
   { to: '/proveedores', label: 'Proveedores', icon: Truck },
   { to: '/reportes', label: 'Reportes', icon: BarChart3 },
+  { to: '/cotizaciones-enviadas', label: 'Cotizaciones', icon: Send },
   { to: '/configuracion', label: 'Configuración', icon: Settings },
 ];
 

@@ -5,11 +5,15 @@ import type { Cotizacion as Cot } from '@/lib/types';
 import { formatMoney, formatDate } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Printer, Plus, Trash2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { ArrowLeft, Printer, Plus, Trash2, Mail, Download, Settings } from 'lucide-react';
 import { LogoMark } from '@/components/Logo';
+import EmailConfigDialog from '@/components/EmailConfigDialog';
 import { toast } from 'sonner';
 
 const emptyPieza = { nombre_pieza: '', cantidad: '1', costo_unitario: '0', tipo_trabajo: 'reemplazo' };
@@ -27,6 +31,10 @@ export default function Cotizacion() {
   const [cot, setCot] = useState<Cot | null>(null);
   const [pieza, setPieza] = useState(emptyPieza);
   const [mo, setMo] = useState(emptyMo);
+  const [sendOpen, setSendOpen] = useState(false);
+  const [cfgOpen, setCfgOpen] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [mail, setMail] = useState({ destinatario: '', asunto: '', cuerpo: '' });
 
   function load() {
     api.get<Cot>(`/cotizaciones/${id}`).then((r) => setCot(r.data));
@@ -67,6 +75,46 @@ export default function Cotizacion() {
     load();
   }
 
+  function openSend() {
+    const v = cot?.vehiculo;
+    setMail({
+      destinatario: v?.cliente_email || '',
+      asunto: v ? `Cotización ${v.marca} ${v.modelo} (${v.patente})` : 'Cotización',
+      cuerpo:
+        `Estimado/a ${v?.cliente_nombre || ''}:\n\n` +
+        'Adjuntamos la cotización solicitada en formato PDF. ' +
+        'Quedamos atentos a cualquier consulta.\n\nSaludos cordiales.',
+    });
+    setSendOpen(true);
+  }
+
+  async function sendEmail(e: FormEvent) {
+    e.preventDefault();
+    if (!mail.destinatario.trim()) return toast.error('Indica el correo del destinatario');
+    setSending(true);
+    try {
+      const { data } = await api.post(`/cotizaciones/${id}/enviar`, mail);
+      toast.success(data.message || 'Cotización enviada');
+      setSendOpen(false);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'No se pudo enviar la cotización';
+      toast.error(msg);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function downloadPDF() {
+    try {
+      const res = await api.get(`/cotizaciones/${id}/pdf`, { responseType: 'blob' });
+      const url = URL.createObjectURL(res.data as Blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch {
+      toast.error('No se pudo generar el PDF');
+    }
+  }
+
   if (!cot) {
     return <div className="py-10 text-center text-muted-foreground">Cargando…</div>;
   }
@@ -84,11 +132,73 @@ export default function Cotizacion() {
           </Link>
           <h1 className="text-2xl font-semibold tracking-tight">Cotización</h1>
         </div>
-        <Button onClick={() => window.print()}>
-          <Printer className="mr-2 h-4 w-4" />
-          Imprimir / PDF
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="ghost" size="icon" aria-label="Configurar casilla" onClick={() => setCfgOpen(true)}>
+            <Settings className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" onClick={downloadPDF}>
+            <Download className="mr-2 h-4 w-4" />
+            PDF
+          </Button>
+          <Button variant="outline" onClick={() => window.print()}>
+            <Printer className="mr-2 h-4 w-4" />
+            Imprimir
+          </Button>
+          <Button onClick={openSend}>
+            <Mail className="mr-2 h-4 w-4" />
+            Enviar por correo
+          </Button>
+        </div>
       </div>
+
+      <Dialog open={sendOpen} onOpenChange={setSendOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Enviar cotización por correo</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={sendEmail} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="dest">Destinatario</Label>
+              <Input
+                id="dest"
+                type="email"
+                value={mail.destinatario}
+                onChange={(e) => setMail({ ...mail, destinatario: e.target.value })}
+                placeholder="cliente@correo.com"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="asunto">Asunto</Label>
+              <Input
+                id="asunto"
+                value={mail.asunto}
+                onChange={(e) => setMail({ ...mail, asunto: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cuerpo">Mensaje</Label>
+              <Textarea
+                id="cuerpo"
+                rows={6}
+                value={mail.cuerpo}
+                onChange={(e) => setMail({ ...mail, cuerpo: e.target.value })}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Se adjuntará la cotización en PDF automáticamente.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => setSendOpen(false)}>Cancelar</Button>
+              <Button type="submit" disabled={sending}>
+                {sending ? 'Enviando…' : 'Enviar'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <EmailConfigDialog open={cfgOpen} onOpenChange={setCfgOpen} />
 
       {/* Formularios de carga (no se imprimen) */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 print:hidden">

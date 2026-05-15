@@ -7,7 +7,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Car, Flag, Coins, AlertTriangle, Plus, Eye } from 'lucide-react';
+import { Car, Flag, Coins, AlertTriangle, Plus, Eye, PackageCheck, Receipt, Wrench, Send } from 'lucide-react';
+
+function mesCorto(ym: string) {
+  const [y, m] = ym.split('-');
+  const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  return `${meses[Number(m) - 1] || m} ${String(y).slice(2)}`;
+}
 
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -38,7 +44,15 @@ export default function Dashboard() {
     { label: 'Listos para entrega', value: data.listos, icon: Flag, color: 'text-success' },
     { label: 'Ingresos del mes', value: formatMoney(data.ingresosMes), icon: Coins, color: 'text-primary' },
     { label: 'Pendiente de cobro', value: formatMoney(data.pendienteCobro), icon: AlertTriangle, color: 'text-destructive' },
+    { label: 'Entregados este mes', value: data.entregadosMes ?? 0, icon: PackageCheck, color: 'text-success' },
+    { label: 'Ticket promedio', value: formatMoney(data.ticketPromedio ?? 0), icon: Receipt, color: 'text-primary' },
+    { label: 'Piezas pendientes', value: data.piezasPendientes ?? 0, icon: Wrench, color: 'text-warning' },
+    { label: 'Cotizaciones enviadas (mes)', value: data.cotizacionesMes ?? 0, icon: Send, color: 'text-info' },
   ];
+
+  const maxIngreso = Math.max(1, ...(data.ingresosPorMes ?? []).map((m) => Number(m.total)));
+  const maxVeh = Math.max(1, ...(data.ingresosVehiculosPorMes ?? []).map((m) => Number(m.total)));
+  const maxCli = Math.max(1, ...(data.topClientes ?? []).map((c) => Number(c.total)));
 
   return (
     <div className="space-y-6">
@@ -64,6 +78,78 @@ export default function Dashboard() {
           </Card>
         ))}
       </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardContent className="p-6">
+            <h2 className="mb-6 text-lg font-semibold">Ingresos últimos 6 meses</h2>
+            {(!data.ingresosPorMes || data.ingresosPorMes.length === 0) ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">Sin pagos registrados</p>
+            ) : (
+              <div className="flex h-48 items-end gap-3">
+                {data.ingresosPorMes.map((m) => (
+                  <div key={m.mes} className="flex flex-1 flex-col items-center gap-2">
+                    <span className="text-xs tabular-nums text-muted-foreground">
+                      {Number(m.total) >= 1000 ? `${Math.round(Number(m.total) / 1000)}k` : m.total}
+                    </span>
+                    <div
+                      className="w-full rounded-t-md bg-primary/80 transition-all hover:bg-primary"
+                      style={{ height: `${Math.max(4, (Number(m.total) / maxIngreso) * 150)}px` }}
+                      title={formatMoney(m.total)}
+                    />
+                    <span className="text-xs text-muted-foreground">{mesCorto(m.mes)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <h2 className="mb-4 text-lg font-semibold">Top clientes</h2>
+            {(!data.topClientes || data.topClientes.length === 0) ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">Sin datos</p>
+            ) : (
+              <div className="space-y-3">
+                {data.topClientes.map((c) => (
+                  <div key={c.nombre}>
+                    <div className="mb-1 flex justify-between text-sm">
+                      <span className="truncate pr-2">{c.nombre}</span>
+                      <span className="tabular-nums text-muted-foreground">{c.total}</span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-accent">
+                      <div className="h-full rounded-full bg-primary" style={{ width: `${(Number(c.total) / maxCli) * 100}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardContent className="p-6">
+          <h2 className="mb-6 text-lg font-semibold">Vehículos ingresados por mes</h2>
+          {(!data.ingresosVehiculosPorMes || data.ingresosVehiculosPorMes.length === 0) ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">Sin ingresos registrados</p>
+          ) : (
+            <div className="flex h-40 items-end gap-3">
+              {data.ingresosVehiculosPorMes.map((m) => (
+                <div key={m.mes} className="flex flex-1 flex-col items-center gap-2">
+                  <span className="text-xs tabular-nums text-muted-foreground">{m.total}</span>
+                  <div
+                    className="w-full rounded-t-md bg-info/70 transition-all hover:bg-info"
+                    style={{ height: `${Math.max(4, (Number(m.total) / maxVeh) * 110)}px` }}
+                  />
+                  <span className="text-xs text-muted-foreground">{mesCorto(m.mes)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">

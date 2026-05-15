@@ -151,6 +151,21 @@ export interface Cotizacion {
   };
 }
 
+export interface CotizacionEnviada {
+  id: number;
+  vehiculo_id: number;
+  patente: string;
+  cliente_nombre: string;
+  destinatario: string;
+  asunto: string;
+  cuerpo: string;
+  total: number;
+  enviado_por: string;
+  estado: 'enviado' | 'error';
+  error_detalle: string | null;
+  created_at: string;
+}
+
 export interface DashboardData {
   totalVehiculos: number;
   enTaller: number;
@@ -160,6 +175,13 @@ export interface DashboardData {
   pendienteCobro: number;
   recientes: Vehiculo[];
   porEstado: { estado: EstadoVehiculo; total: number }[];
+  entregadosMes: number;
+  ticketPromedio: number;
+  piezasPendientes: number;
+  cotizacionesMes: number;
+  ingresosPorMes: { mes: string; total: number }[];
+  ingresosVehiculosPorMes: { mes: string; total: number }[];
+  topClientes: { nombre: string; total: number }[];
 }
 
 export const ESTADOS: Record<EstadoVehiculo, { label: string; color: string }> = {

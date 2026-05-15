@@ -16,6 +16,7 @@ import Reportes from '@/pages/Reportes';
 import Configuracion from '@/pages/Configuracion';
 import Usuarios from '@/pages/Usuarios';
 import Cotizacion from '@/pages/Cotizacion';
+import CotizacionesEnviadas from '@/pages/CotizacionesEnviadas';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { token } = useAuth();
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="vehiculos/nuevo" element={<VehiculoForm />} />
         <Route path="vehiculos/:id" element={<VehiculoDetalle />} />
         <Route path="vehiculos/:id/cotizacion" element={<Cotizacion />} />
+        <Route path="cotizaciones-enviadas" element={<CotizacionesEnviadas />} />
         <Route path="vehiculos/:id/editar" element={<VehiculoForm />} />
         <Route path="piezas" element={<Piezas />} />
         <Route path="pagos" element={<Pagos />} />

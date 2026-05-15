@@ -128,6 +128,22 @@ CREATE TABLE IF NOT EXISTS configuracion (
     descripcion VARCHAR(200)
 );
 
+CREATE TABLE IF NOT EXISTS cotizaciones_enviadas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    vehiculo_id INT NOT NULL,
+    patente VARCHAR(10),
+    cliente_nombre VARCHAR(150),
+    destinatario VARCHAR(200) NOT NULL,
+    asunto VARCHAR(250),
+    cuerpo TEXT,
+    total DECIMAL(12,0) DEFAULT 0,
+    enviado_por VARCHAR(150),
+    estado ENUM('enviado','error') DEFAULT 'enviado',
+    error_detalle VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id) ON DELETE CASCADE
+);
+
 -- Migración para bases de datos ya existentes (no-op en instalación nueva)
 ALTER TABLE usuarios MODIFY COLUMN rol ENUM('admin','superusuario') NOT NULL DEFAULT 'admin';
 
