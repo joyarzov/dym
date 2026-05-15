@@ -7,12 +7,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Printer, Plus, Trash2 } from 'lucide-react';
 import { LogoMark } from '@/components/Logo';
 import { toast } from 'sonner';
 
-const emptyPieza = { nombre_pieza: '', cantidad: '1', costo_unitario: '0' };
+const emptyPieza = { nombre_pieza: '', cantidad: '1', costo_unitario: '0', tipo_trabajo: 'reemplazo' };
 const emptyMo = { descripcion: '', valor: '0' };
+
+const TIPO_LABEL: Record<string, string> = {
+  reparacion: 'Reparación',
+  reemplazo: 'Reemplazo',
+  pintura: 'Pintura',
+  desabolladura: 'Desabolladura',
+};
 
 export default function Cotizacion() {
   const { id } = useParams();
@@ -29,7 +37,7 @@ export default function Cotizacion() {
     e.preventDefault();
     if (!pieza.nombre_pieza.trim()) return toast.error('Indica el nombre de la pieza');
     try {
-      await api.post('/piezas', { ...pieza, vehiculo_id: id, tipo_trabajo: 'reemplazo' });
+      await api.post('/piezas', { ...pieza, vehiculo_id: id });
       setPieza(emptyPieza);
       load();
     } catch {
@@ -96,6 +104,19 @@ export default function Cotizacion() {
                 <label className="text-xs text-muted-foreground">Cant.</label>
                 <Input type="number" min="1" value={pieza.cantidad} onChange={(e) => setPieza({ ...pieza, cantidad: e.target.value })} />
               </div>
+              <div className="w-40 space-y-1">
+                <label className="text-xs text-muted-foreground">Tipo de trabajo</label>
+                <select
+                  value={pieza.tipo_trabajo}
+                  onChange={(e) => setPieza({ ...pieza, tipo_trabajo: e.target.value })}
+                  className="h-9 w-full rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                >
+                  <option value="reemplazo">Reemplazo</option>
+                  <option value="pintura">Pintura</option>
+                  <option value="desabolladura">Desabolladura</option>
+                  <option value="reparacion">Reparación</option>
+                </select>
+              </div>
               <div className="w-32 space-y-1">
                 <label className="text-xs text-muted-foreground">Valor unit.</label>
                 <Input type="number" min="0" value={pieza.costo_unitario} onChange={(e) => setPieza({ ...pieza, costo_unitario: e.target.value })} />
@@ -158,11 +179,12 @@ export default function Cotizacion() {
           </div>
 
           <div>
-            <p className="mb-2 font-medium">Repuestos y materiales</p>
+            <p className="mb-2 font-medium">Detalle</p>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Detalle</TableHead>
+                  <TableHead>Tipo</TableHead>
                   <TableHead className="text-right">Cant.</TableHead>
                   <TableHead className="text-right">Valor unit.</TableHead>
                   <TableHead className="text-right">Total</TableHead>
@@ -170,11 +192,15 @@ export default function Cotizacion() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cot.piezas.length === 0 ? (
-                  <TableRow><TableCell colSpan={5} className="py-4 text-center text-muted-foreground">Sin repuestos</TableCell></TableRow>
-                ) : cot.piezas.map((p) => (
-                  <TableRow key={p.id}>
+                {cot.piezas.length === 0 && cot.manoObra.length === 0 && (
+                  <TableRow><TableCell colSpan={6} className="py-4 text-center text-muted-foreground">Sin ítems en la cotización</TableCell></TableRow>
+                )}
+                {cot.piezas.map((p) => (
+                  <TableRow key={`p-${p.id}`}>
                     <TableCell>{p.nombre_pieza}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{TIPO_LABEL[p.tipo_trabajo] || p.tipo_trabajo}</Badge>
+                    </TableCell>
                     <TableCell className="text-right tabular-nums">{p.cantidad}</TableCell>
                     <TableCell className="text-right tabular-nums">{formatMoney(p.costo_unitario)}</TableCell>
                     <TableCell className="text-right tabular-nums">{formatMoney(p.costo_total)}</TableCell>
@@ -185,26 +211,14 @@ export default function Cotizacion() {
                     </TableCell>
                   </TableRow>
                 ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          <div>
-            <p className="mb-2 font-medium">Mano de obra</p>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Trabajo</TableHead>
-                  <TableHead className="text-right">Valor</TableHead>
-                  <TableHead className="w-10 print:hidden" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {cot.manoObra.length === 0 ? (
-                  <TableRow><TableCell colSpan={3} className="py-4 text-center text-muted-foreground">Sin mano de obra</TableCell></TableRow>
-                ) : cot.manoObra.map((m) => (
-                  <TableRow key={m.id}>
+                {cot.manoObra.map((m) => (
+                  <TableRow key={`m-${m.id}`}>
                     <TableCell>{m.descripcion}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">Mano de obra</Badge>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">1</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatMoney(m.valor)}</TableCell>
                     <TableCell className="text-right tabular-nums">{formatMoney(m.valor)}</TableCell>
                     <TableCell className="print:hidden">
                       <Button variant="ghost" size="icon" onClick={() => delMo(m.id)} aria-label="Eliminar">
