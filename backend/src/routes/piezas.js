@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import db from '../config/database.js';
+import { recalcPresupuesto } from '../lib/presupuesto.js';
 
 const router = Router();
 
@@ -28,6 +29,7 @@ router.post('/', async (req, res) => {
       'INSERT INTO piezas (vehiculo_id, proveedor_id, nombre_pieza, tipo_trabajo, descripcion, cantidad, costo_unitario, costo_total, fecha_inicio) VALUES (?,?,?,?,?,?,?,?,?)',
       [vehiculo_id, proveedor_id || null, nombre_pieza, tipo_trabajo, descripcion, cantidad || 1, costo_unitario || 0, costoTotal, fecha_inicio || null]
     );
+    await recalcPresupuesto(vehiculo_id);
     res.status(201).json({ id: result.insertId, message: 'Pieza creada' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -42,6 +44,8 @@ router.put('/:id', async (req, res) => {
       'UPDATE piezas SET proveedor_id=?, nombre_pieza=?, tipo_trabajo=?, descripcion=?, cantidad=?, costo_unitario=?, costo_total=?, estado=?, fecha_inicio=?, fecha_fin=? WHERE id=?',
       [proveedor_id || null, nombre_pieza, tipo_trabajo, descripcion, cantidad, costo_unitario, costoTotal, estado, fecha_inicio || null, fecha_fin || null, req.params.id]
     );
+    const [[row]] = await db.query('SELECT vehiculo_id FROM piezas WHERE id = ?', [req.params.id]);
+    if (row) await recalcPresupuesto(row.vehiculo_id);
     res.json({ message: 'Pieza actualizada' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -50,7 +54,9 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
+    const [[row]] = await db.query('SELECT vehiculo_id FROM piezas WHERE id = ?', [req.params.id]);
     await db.query('DELETE FROM piezas WHERE id = ?', [req.params.id]);
+    if (row) await recalcPresupuesto(row.vehiculo_id);
     res.json({ message: 'Pieza eliminada' });
   } catch (err) {
     res.status(500).json({ error: err.message });

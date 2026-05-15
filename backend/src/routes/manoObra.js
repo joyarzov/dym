@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import db from '../config/database.js';
+import { recalcPresupuesto } from '../lib/presupuesto.js';
 
 const router = Router();
 
@@ -28,6 +29,7 @@ router.post('/', async (req, res) => {
       'INSERT INTO mano_obra (vehiculo_id, descripcion, valor) VALUES (?,?,?)',
       [vehiculo_id, descripcion, monto]
     );
+    await recalcPresupuesto(vehiculo_id);
     res.status(201).json({ id: result.insertId, message: 'Mano de obra agregada' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -36,7 +38,9 @@ router.post('/', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
+    const [[row]] = await db.query('SELECT vehiculo_id FROM mano_obra WHERE id = ?', [req.params.id]);
     await db.query('DELETE FROM mano_obra WHERE id = ?', [req.params.id]);
+    if (row) await recalcPresupuesto(row.vehiculo_id);
     res.json({ message: 'Ítem eliminado' });
   } catch (err) {
     res.status(500).json({ error: err.message });

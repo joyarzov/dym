@@ -92,7 +92,7 @@ export default function VehiculoDetalle() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Estado</p><Badge className={`mt-1 ${ESTADOS[v.estado].color}`}>{ESTADOS[v.estado].label}</Badge></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Presupuesto</p><p className="text-xl font-bold">{formatMoney(v.presupuesto_estimado)}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Presupuesto (cotización c/IVA)</p><p className="text-xl font-bold">{formatMoney(v.presupuesto_estimado)}</p></CardContent></Card>
         <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Saldo Pendiente</p><p className={`text-xl font-bold ${saldo > 0 ? 'text-red-400' : 'text-green-400'}`}>{formatMoney(saldo)}</p></CardContent></Card>
       </div>
 

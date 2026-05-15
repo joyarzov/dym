@@ -139,7 +139,11 @@ export default function VehiculoForm() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="space-y-2"><Label>Fecha Ingreso *</Label><Input type="date" value={String(form.fecha_ingreso)} onChange={(e) => set('fecha_ingreso', e.target.value)} required /></div>
                 <div className="space-y-2"><Label>Fecha Estimada Entrega</Label><Input type="date" value={String(form.fecha_estimada_entrega)} onChange={(e) => set('fecha_estimada_entrega', e.target.value)} /></div>
-                <div className="space-y-2"><Label>Presupuesto</Label><Input type="number" value={String(form.presupuesto_estimado)} onChange={(e) => set('presupuesto_estimado', e.target.value)} /></div>
+                <div className="space-y-2">
+                  <Label>Presupuesto</Label>
+                  <Input type="number" value={String(form.presupuesto_estimado)} disabled />
+                  <p className="text-xs text-muted-foreground">Se calcula automáticamente desde la cotización (piezas + mano de obra + IVA).</p>
+                </div>
               </div>
             </div>
 
