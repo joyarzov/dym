@@ -17,6 +17,8 @@ import Configuracion from '@/pages/Configuracion';
 import Usuarios from '@/pages/Usuarios';
 import Cotizacion from '@/pages/Cotizacion';
 import CotizacionesEnviadas from '@/pages/CotizacionesEnviadas';
+import EnTaller from '@/pages/EnTaller';
+import Tablero from '@/pages/Tablero';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { token } = useAuth();
@@ -32,6 +34,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/tablero" element={<PrivateRoute><Tablero /></PrivateRoute>} />
       <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="clientes" element={<Clientes />} />
@@ -41,6 +44,7 @@ export default function App() {
         <Route path="vehiculos/nuevo" element={<VehiculoForm />} />
         <Route path="vehiculos/:id" element={<VehiculoDetalle />} />
         <Route path="vehiculos/:id/cotizacion" element={<Cotizacion />} />
+        <Route path="en-taller" element={<EnTaller />} />
         <Route path="cotizaciones-enviadas" element={<CotizacionesEnviadas />} />
         <Route path="vehiculos/:id/editar" element={<VehiculoForm />} />
         <Route path="piezas" element={<Piezas />} />

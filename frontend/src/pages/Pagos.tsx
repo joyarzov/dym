@@ -63,7 +63,7 @@ export default function Pagos() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Pagos</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger render={<Button><Plus className="h-4 w-4 mr-2" />Nuevo Pago</Button>} />
@@ -108,8 +108,9 @@ export default function Pagos() {
           </DialogContent>
         </Dialog>
       </div>
-      <Card><CardContent className="p-6">
-        <Table>
+      <Card><CardContent className="p-4 sm:p-6">
+        <div className="overflow-x-auto">
+        <Table className="min-w-[720px]">
           <TableHeader><TableRow>
             <TableHead>Fecha</TableHead><TableHead>Patente</TableHead><TableHead>Cliente</TableHead>
             <TableHead>Tipo</TableHead><TableHead>Método</TableHead><TableHead>Monto</TableHead>
@@ -131,6 +132,7 @@ export default function Pagos() {
             {!pagos.length && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Sin pagos</TableCell></TableRow>}
           </TableBody>
         </Table>
+        </div>
       </CardContent></Card>
     </div>
   );

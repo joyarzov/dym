@@ -56,7 +56,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <Link to="/vehiculos/nuevo">
           <Button><Plus className="h-4 w-4 mr-2" />Nuevo Ingreso</Button>
@@ -162,7 +162,8 @@ export default function Dashboard() {
               {data.recientes.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">No hay vehículos en el taller</p>
               ) : (
-                <Table>
+                <div className="overflow-x-auto">
+                <Table className="min-w-[640px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Patente</TableHead>
@@ -192,6 +193,7 @@ export default function Dashboard() {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               )}
             </CardContent>
           </Card>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '@/lib/api';
 import type { Vehiculo } from '@/lib/types';
 import { ESTADOS, formatMoney, formatDate } from '@/lib/types';
@@ -10,11 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Pencil, ArrowLeft, ImageIcon, FileText } from 'lucide-react';
+import { Pencil, ArrowLeft, ImageIcon, FileText, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function VehiculoDetalle() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [v, setV] = useState<Vehiculo | null>(null);
 
   function load() {
@@ -28,6 +29,17 @@ export default function VehiculoDetalle() {
     await api.patch(`/vehiculos/${id}/estado`, { estado });
     toast.success('Estado actualizado');
     load();
+  }
+
+  async function reingresar() {
+    if (!confirm('¿Crear una nueva orden de trabajo (reingreso) para esta patente? Las visitas anteriores quedan en el historial.')) return;
+    try {
+      const { data } = await api.post(`/vehiculos/${id}/reingreso`);
+      toast.success('Reingreso creado');
+      navigate(`/vehiculos/${data.id}/editar`);
+    } catch {
+      toast.error('No se pudo crear el reingreso');
+    }
   }
 
   async function subirFotos(files: FileList | null, tipo: string) {
@@ -52,25 +64,29 @@ export default function VehiculoDetalle() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link to="/vehiculos"><Button variant="ghost" size="icon"><ArrowLeft className="h-4 w-4" /></Button></Link>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-start gap-3">
+          <Link to="/vehiculos"><Button variant="ghost" size="icon" aria-label="Volver"><ArrowLeft className="h-4 w-4" /></Button></Link>
           <div>
-            <h1 className="text-2xl font-bold">{v.patente} - {v.marca} {v.modelo}</h1>
-            <p className="text-muted-foreground">{v.cliente_nombre} | Ingreso: {formatDate(v.fecha_ingreso)}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-bold sm:text-2xl">{v.patente} · {v.marca} {v.modelo}</h1>
+              <Badge variant="outline" className="font-mono">OT N° {String(v.id).padStart(5, '0')}</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">{v.cliente_nombre} · Ingreso {formatDate(v.fecha_ingreso)}</p>
           </div>
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap items-center gap-2">
           <Select
             items={Object.fromEntries(Object.entries(ESTADOS).map(([k, s]) => [k, s.label]))}
             value={v.estado}
             onValueChange={(val) => cambiarEstado(val as string)}
           >
-            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-44"><SelectValue /></SelectTrigger>
             <SelectContent>{Object.entries(ESTADOS).map(([k, s]) => <SelectItem key={k} value={k}>{s.label}</SelectItem>)}</SelectContent>
           </Select>
-          <Link to={`/vehiculos/${id}/cotizacion`}><Button variant="outline"><FileText className="h-4 w-4 mr-2" />Cotización</Button></Link>
-          <Link to={`/vehiculos/${id}/editar`}><Button variant="outline"><Pencil className="h-4 w-4 mr-2" />Editar</Button></Link>
+          <Button variant="outline" onClick={reingresar}><RotateCcw className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Reingresar</span></Button>
+          <Link to={`/vehiculos/${id}/cotizacion`}><Button variant="outline"><FileText className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Cotización</span></Button></Link>
+          <Link to={`/vehiculos/${id}/editar`}><Button variant="outline"><Pencil className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Editar</span></Button></Link>
         </div>
       </div>
 
@@ -81,11 +97,13 @@ export default function VehiculoDetalle() {
       </div>
 
       <Tabs defaultValue="info">
-        <TabsList>
+        <TabsList className="flex w-full flex-wrap">
           <TabsTrigger value="info">Información</TabsTrigger>
           <TabsTrigger value="piezas">Piezas ({v.piezas?.length || 0})</TabsTrigger>
           <TabsTrigger value="pagos">Pagos ({v.pagos?.length || 0})</TabsTrigger>
           <TabsTrigger value="fotos">Fotos ({v.fotos?.length || 0})</TabsTrigger>
+          <TabsTrigger value="historial">Historial ({v.historial?.length || 0})</TabsTrigger>
+          <TabsTrigger value="trazabilidad">Trazabilidad</TabsTrigger>
         </TabsList>
 
         <TabsContent value="info">
@@ -191,6 +209,71 @@ export default function VehiculoDetalle() {
                 ))}
               </div>
             ) : <p className="text-center text-muted-foreground py-4">Sin fotos</p>}
+          </CardContent></Card>
+        </TabsContent>
+
+        <TabsContent value="historial">
+          <Card><CardContent className="p-4 sm:p-6">
+            <p className="mb-4 text-sm text-muted-foreground">
+              Órdenes de trabajo registradas para la patente <span className="font-medium text-foreground">{v.patente}</span>.
+            </p>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader><TableRow>
+                  <TableHead>OT</TableHead><TableHead>Ingreso</TableHead><TableHead>Entrega</TableHead>
+                  <TableHead>Estado</TableHead><TableHead>Presupuesto</TableHead><TableHead>Pagado</TableHead><TableHead></TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {v.historial?.map((o) => (
+                    <TableRow key={o.id} className={o.id === v.id ? 'bg-primary/5' : ''}>
+                      <TableCell className="font-mono">
+                        {String(o.id).padStart(5, '0')}{o.id === v.id && <span className="ml-2 text-xs text-primary">(actual)</span>}
+                      </TableCell>
+                      <TableCell>{formatDate(o.fecha_ingreso)}</TableCell>
+                      <TableCell>{formatDate(o.fecha_entrega_real)}</TableCell>
+                      <TableCell><Badge className={ESTADOS[o.estado].color}>{ESTADOS[o.estado].label}</Badge></TableCell>
+                      <TableCell className="tabular-nums">{formatMoney(o.presupuesto_estimado)}</TableCell>
+                      <TableCell className="tabular-nums">{formatMoney(o.pagado)}</TableCell>
+                      <TableCell>
+                        {o.id !== v.id && (
+                          <Link to={`/vehiculos/${o.id}`}>
+                            <Button variant="ghost" size="sm">Ver</Button>
+                          </Link>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {!v.historial?.length && (
+                    <TableRow><TableCell colSpan={7} className="py-4 text-center text-muted-foreground">Sin historial</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent></Card>
+        </TabsContent>
+
+        <TabsContent value="trazabilidad">
+          <Card><CardContent className="p-4 sm:p-6">
+            {!v.trazabilidad?.length ? (
+              <p className="py-6 text-center text-muted-foreground">
+                Aún no hay cambios de estado registrados para esta OT.
+              </p>
+            ) : (
+              <ol className="relative space-y-6 border-l border-border pl-6">
+                {v.trazabilidad.map((t, i) => (
+                  <li key={i} className="relative">
+                    <span className={`absolute -left-[31px] flex h-4 w-4 items-center justify-center rounded-full ring-4 ring-background ${ESTADOS[t.estado].color}`} />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge className={ESTADOS[t.estado].color}>{ESTADOS[t.estado].label}</Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(String(t.created_at).replace(' ', 'T')).toLocaleString('es-CL')}
+                      </span>
+                    </div>
+                    {t.usuario && <p className="mt-1 text-xs text-muted-foreground">por {t.usuario}</p>}
+                  </li>
+                ))}
+              </ol>
+            )}
           </CardContent></Card>
         </TabsContent>
       </Tabs>

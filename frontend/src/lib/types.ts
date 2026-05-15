@@ -79,6 +79,36 @@ export interface Vehiculo {
   piezas?: Pieza[];
   pagos?: Pago[];
   totalPagado?: number;
+  historial?: OrdenHistorial[];
+  trazabilidad?: TrazaEstado[];
+}
+
+export interface TrazaEstado {
+  estado: EstadoVehiculo;
+  usuario: string | null;
+  created_at: string;
+}
+
+export interface EnTallerVehiculo {
+  id: number;
+  patente: string;
+  marca: string;
+  modelo: string;
+  color: string;
+  estado: EstadoVehiculo;
+  fecha_ingreso: string;
+  fecha_estimada_entrega: string | null;
+  cliente_nombre: string;
+  dias_en_taller: number;
+}
+
+export interface OrdenHistorial {
+  id: number;
+  fecha_ingreso: string;
+  fecha_entrega_real: string | null;
+  estado: EstadoVehiculo;
+  presupuesto_estimado: number;
+  pagado: number;
 }
 
 export type EstadoVehiculo =

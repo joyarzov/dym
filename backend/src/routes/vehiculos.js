@@ -45,6 +45,42 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Busca la OT más reciente por patente exacta (para proponer reingreso)
+router.get('/buscar/patente', async (req, res) => {
+  try {
+    const patente = String(req.query.patente || '').trim();
+    if (!patente) return res.json(null);
+    const [rows] = await db.query(
+      `SELECT v.id, v.patente, v.marca, v.modelo, v.estado, v.fecha_ingreso, c.nombre AS cliente_nombre
+       FROM vehiculos v JOIN clientes c ON c.id = v.cliente_id
+       WHERE UPPER(v.patente) = UPPER(?)
+       ORDER BY v.fecha_ingreso DESC, v.id DESC LIMIT 1`,
+      [patente]
+    );
+    res.json(rows[0] || null);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Vehículos actualmente en taller (no entregados) con días en taller
+router.get('/en-taller', async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT v.id, v.patente, v.marca, v.modelo, v.color, v.estado,
+              v.fecha_ingreso, v.fecha_estimada_entrega,
+              c.nombre AS cliente_nombre,
+              DATEDIFF(CURRENT_DATE(), v.fecha_ingreso) AS dias_en_taller
+       FROM vehiculos v JOIN clientes c ON c.id = v.cliente_id
+       WHERE v.estado != 'entregado'
+       ORDER BY v.fecha_ingreso ASC, v.id ASC`
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const [rows] = await db.query(
@@ -59,7 +95,45 @@ router.get('/:id', async (req, res) => {
 
     const totalPagado = pagos.reduce((sum, p) => sum + Number(p.monto), 0);
 
-    res.json({ ...rows[0], fotos, piezas, pagos, totalPagado });
+    // Historial: todas las OT (ingresos) de la misma patente
+    const [historial] = await db.query(
+      `SELECT v.id, v.fecha_ingreso, v.fecha_entrega_real, v.estado, v.presupuesto_estimado,
+              COALESCE((SELECT SUM(monto) FROM pagos WHERE vehiculo_id = v.id), 0) AS pagado
+       FROM vehiculos v
+       WHERE v.patente = ?
+       ORDER BY v.fecha_ingreso DESC, v.id DESC`,
+      [rows[0].patente]
+    );
+
+    const [trazabilidad] = await db.query(
+      'SELECT estado, usuario, created_at FROM estado_historial WHERE vehiculo_id = ? ORDER BY created_at ASC, id ASC',
+      [req.params.id]
+    );
+
+    res.json({ ...rows[0], fotos, piezas, pagos, totalPagado, historial, trazabilidad });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Reingreso: crea una nueva OT clonando los datos del vehículo (activo)
+router.post('/:id/reingreso', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM vehiculos WHERE id = ?', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Vehiculo no encontrado' });
+    const v = rows[0];
+    const hoy = new Date().toISOString().slice(0, 10);
+
+    const [result] = await db.query(
+      `INSERT INTO vehiculos (cliente_id, patente, marca, modelo, anio, color, fecha_ingreso, estado)
+       VALUES (?,?,?,?,?,?,?, 'recibido')`,
+      [v.cliente_id, v.patente, v.marca, v.modelo, v.anio, v.color, hoy]
+    );
+    await db.query(
+      'INSERT INTO estado_historial (vehiculo_id, estado, usuario) VALUES (?, ?, ?)',
+      [result.insertId, 'recibido', req.user?.nombre || req.user?.username || '']
+    );
+    res.status(201).json({ id: result.insertId, message: 'Reingreso creado' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -86,6 +160,11 @@ router.post('/', async (req, res) => {
         estado || 'recibido', tiene_seguro ? 1 : 0, aseguradora, numero_poliza, numero_siniestro,
         nombre_ajustador, telefono_ajustador, presupuesto, presupuesto >= 1300000 ? 1 : 0, montoAnticipo,
         diagnostico, observaciones]
+    );
+
+    await db.query(
+      'INSERT INTO estado_historial (vehiculo_id, estado, usuario) VALUES (?, ?, ?)',
+      [result.insertId, estado || 'recibido', req.user?.nombre || req.user?.username || '']
     );
 
     res.status(201).json({ id: result.insertId, message: 'Vehiculo ingresado' });
@@ -130,6 +209,10 @@ router.patch('/:id/estado', async (req, res) => {
       ? 'UPDATE vehiculos SET estado = ?, fecha_entrega_real = CURRENT_DATE() WHERE id = ?'
       : 'UPDATE vehiculos SET estado = ? WHERE id = ?';
     await db.query(update, [estado, req.params.id]);
+    await db.query(
+      'INSERT INTO estado_historial (vehiculo_id, estado, usuario) VALUES (?,?,?)',
+      [req.params.id, estado, req.user?.nombre || req.user?.username || '']
+    );
     res.json({ message: 'Estado actualizado' });
   } catch (err) {
     res.status(500).json({ error: err.message });

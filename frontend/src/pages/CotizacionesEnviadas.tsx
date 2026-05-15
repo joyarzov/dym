@@ -41,7 +41,8 @@ export default function CotizacionesEnviadas() {
           ) : items.length === 0 ? (
             <p className="py-12 text-center text-muted-foreground">Aún no se han enviado cotizaciones</p>
           ) : (
-            <Table>
+            <div className="overflow-x-auto">
+            <Table className="min-w-[820px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Fecha</TableHead>
@@ -81,6 +82,7 @@ export default function CotizacionesEnviadas() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

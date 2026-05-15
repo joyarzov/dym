@@ -29,16 +29,17 @@ export default function Proveedores() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Proveedores</h1>
         <Link to="/proveedores/nuevo"><Button><Plus className="h-4 w-4 mr-2" />Nuevo Proveedor</Button></Link>
       </div>
-      <Card><CardContent className="p-6">
+      <Card><CardContent className="p-4 sm:p-6">
         <div className="flex gap-2 mb-4">
           <Input placeholder="Buscar por razón social, RUT o rubro..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load(search)} />
           <Button variant="outline" onClick={() => load(search)}><Search className="h-4 w-4" /></Button>
         </div>
-        <Table>
+        <div className="overflow-x-auto">
+        <Table className="min-w-[720px]">
           <TableHeader><TableRow>
             <TableHead>RUT</TableHead><TableHead>Razón Social</TableHead><TableHead>Contacto</TableHead>
             <TableHead>Teléfono</TableHead><TableHead>Rubro</TableHead><TableHead>Estado</TableHead><TableHead></TableHead>
@@ -61,6 +62,7 @@ export default function Proveedores() {
             {!proveedores.length && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Sin proveedores</TableCell></TableRow>}
           </TableBody>
         </Table>
+        </div>
       </CardContent></Card>
     </div>
   );

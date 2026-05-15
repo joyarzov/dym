@@ -52,13 +52,14 @@ export default function Reportes() {
 
         <TabsContent value="ingresos">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
               <CardTitle>Reporte de Ingresos</CardTitle>
               <Button onClick={buscarIngresos}><Search className="h-4 w-4 mr-2" />Buscar</Button>
             </CardHeader>
             <CardContent>
               {pagos.length > 0 && <p className="text-right mb-4 text-lg font-bold">Total: {formatMoney(totalIngresos)}</p>}
-              <Table>
+              <div className="overflow-x-auto">
+              <Table className="min-w-[640px]">
                 <TableHeader><TableRow>
                   <TableHead>Fecha</TableHead><TableHead>Patente</TableHead><TableHead>Cliente</TableHead>
                   <TableHead>Tipo</TableHead><TableHead>Método</TableHead><TableHead>Monto</TableHead>
@@ -77,18 +78,20 @@ export default function Reportes() {
                   {!pagos.length && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Sin resultados</TableCell></TableRow>}
                 </TableBody>
               </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="vehiculos">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
               <CardTitle>Reporte de Vehículos</CardTitle>
               <Button onClick={buscarVehiculos}><Search className="h-4 w-4 mr-2" />Buscar</Button>
             </CardHeader>
             <CardContent>
-              <Table>
+              <div className="overflow-x-auto">
+              <Table className="min-w-[640px]">
                 <TableHeader><TableRow>
                   <TableHead>Patente</TableHead><TableHead>Cliente</TableHead><TableHead>Vehículo</TableHead>
                   <TableHead>Ingreso</TableHead><TableHead>Presupuesto</TableHead><TableHead>Estado</TableHead>
@@ -107,6 +110,7 @@ export default function Reportes() {
                   {!vehiculos.length && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Sin resultados</TableCell></TableRow>}
                 </TableBody>
               </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

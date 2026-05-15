@@ -34,17 +34,18 @@ export default function Clientes() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Clientes</h1>
         <Link to="/clientes/nuevo"><Button><Plus className="h-4 w-4 mr-2" />Nuevo Cliente</Button></Link>
       </div>
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           <div className="flex gap-2 mb-4">
             <Input placeholder="Buscar por nombre, RUT o teléfono..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} />
             <Button variant="outline" onClick={handleSearch}><Search className="h-4 w-4" /></Button>
           </div>
-          <Table>
+          <div className="overflow-x-auto">
+          <Table className="min-w-[640px]">
             <TableHeader>
               <TableRow>
                 <TableHead>RUT</TableHead>
@@ -74,6 +75,7 @@ export default function Clientes() {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

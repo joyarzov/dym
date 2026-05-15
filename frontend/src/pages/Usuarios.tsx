@@ -140,7 +140,8 @@ export default function Usuarios() {
           ) : usuarios.length === 0 ? (
             <p className="py-12 text-center text-muted-foreground">No hay usuarios registrados</p>
           ) : (
-            <Table>
+            <div className="overflow-x-auto">
+            <Table className="min-w-[720px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Nombre</TableHead>
@@ -216,6 +217,7 @@ export default function Usuarios() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

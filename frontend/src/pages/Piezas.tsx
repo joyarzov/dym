@@ -72,7 +72,7 @@ export default function Piezas() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Piezas</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger render={<Button><Plus className="h-4 w-4 mr-2" />Nueva Pieza</Button>} />
@@ -114,8 +114,9 @@ export default function Piezas() {
           </DialogContent>
         </Dialog>
       </div>
-      <Card><CardContent className="p-6">
-        <Table>
+      <Card><CardContent className="p-4 sm:p-6">
+        <div className="overflow-x-auto">
+        <Table className="min-w-[760px]">
           <TableHeader><TableRow>
             <TableHead>Pieza</TableHead><TableHead>Vehículo</TableHead><TableHead>Tipo</TableHead>
             <TableHead>Cant.</TableHead><TableHead>Costo Total</TableHead><TableHead>Proveedor</TableHead>
@@ -137,6 +138,7 @@ export default function Piezas() {
             {!piezas.length && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Sin piezas</TableCell></TableRow>}
           </TableBody>
         </Table>
+        </div>
       </CardContent></Card>
     </div>
   );

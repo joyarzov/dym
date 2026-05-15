@@ -8,7 +8,18 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+
+interface DupVehiculo {
+  id: number;
+  patente: string;
+  marca: string;
+  modelo: string;
+  estado: string;
+  fecha_ingreso: string;
+  cliente_nombre: string;
+}
 
 const initial = {
   cliente_id: '', patente: '', marca: '', modelo: '', anio: '', color: '',
@@ -25,6 +36,7 @@ export default function VehiculoForm() {
   const [form, setForm] = useState<Record<string, unknown>>(initial);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(false);
+  const [dup, setDup] = useState<DupVehiculo | null>(null);
 
   useEffect(() => {
     api.get('/clientes').then((r) => setClientes(r.data));
@@ -41,23 +53,60 @@ export default function VehiculoForm() {
 
   function set(field: string, value: unknown) { setForm((p) => ({ ...p, [field]: value })); }
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function crearVehiculo() {
     setLoading(true);
     try {
-      if (isEdit) await api.put(`/vehiculos/${id}`, form);
-      else {
-        const res = await api.post('/vehiculos', form);
-        navigate(`/vehiculos/${res.data.id}`);
-        toast.success('Vehículo ingresado');
-        return;
-      }
-      toast.success('Vehículo actualizado');
-      navigate(`/vehiculos/${id}`);
+      const res = await api.post('/vehiculos', form);
+      toast.success('Vehículo ingresado');
+      navigate(`/vehiculos/${res.data.id}`);
     } catch (err: unknown) {
       toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Error');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (isEdit) {
+      setLoading(true);
+      try {
+        await api.put(`/vehiculos/${id}`, form);
+        toast.success('Vehículo actualizado');
+        navigate(`/vehiculos/${id}`);
+      } catch (err: unknown) {
+        toast.error((err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Error');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+    // Alta: si la patente ya existe, proponer un reingreso (nueva OT)
+    try {
+      const patente = String(form.patente || '').trim();
+      if (patente) {
+        const { data } = await api.get('/vehiculos/buscar/patente', { params: { patente } });
+        if (data) {
+          setDup(data);
+          return;
+        }
+      }
+    } catch { /* si falla la búsqueda, seguimos con el alta normal */ }
+    crearVehiculo();
+  }
+
+  async function reingresarDesdeDup() {
+    if (!dup) return;
+    setLoading(true);
+    try {
+      const { data } = await api.post(`/vehiculos/${dup.id}/reingreso`);
+      toast.success('Reingreso creado (nueva OT)');
+      navigate(`/vehiculos/${data.id}/editar`);
+    } catch {
+      toast.error('No se pudo crear el reingreso');
+    } finally {
+      setLoading(false);
+      setDup(null);
     }
   }
 
@@ -122,6 +171,36 @@ export default function VehiculoForm() {
           </form>
         </CardContent>
       </Card>
+
+      <Dialog open={Boolean(dup)} onOpenChange={(o) => { if (!o) setDup(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Esta patente ya está registrada</DialogTitle>
+          </DialogHeader>
+          {dup && (
+            <div className="space-y-4 text-sm">
+              <p>
+                La patente <span className="font-semibold">{dup.patente}</span> ya tiene una
+                orden de trabajo (OT N° {String(dup.id).padStart(5, '0')} ·{' '}
+                {dup.marca} {dup.modelo} · cliente {dup.cliente_nombre}).
+              </p>
+              <p className="text-muted-foreground">
+                Si el vehículo volvió al taller, lo recomendable es crear un
+                <strong> reingreso (nueva OT)</strong>: conserva el historial y no duplica el vehículo.
+              </p>
+              <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
+                <Button variant="ghost" onClick={() => setDup(null)}>Cancelar</Button>
+                <Button variant="outline" onClick={() => { setDup(null); crearVehiculo(); }}>
+                  Crear de todas formas
+                </Button>
+                <Button onClick={reingresarDesdeDup} disabled={loading}>
+                  Crear reingreso
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

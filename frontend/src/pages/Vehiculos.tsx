@@ -24,20 +24,20 @@ export default function Vehiculos() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Vehículos</h1>
         <Link to="/vehiculos/nuevo"><Button><Plus className="h-4 w-4 mr-2" />Nuevo Ingreso</Button></Link>
       </div>
       <Card>
-        <CardContent className="p-6">
-          <div className="flex gap-2 mb-4">
-            <Input placeholder="Buscar por patente, cliente o marca..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load(search, estado)} className="flex-1" />
+        <CardContent className="p-4 sm:p-6">
+          <div className="mb-4 flex flex-wrap gap-2">
+            <Input placeholder="Buscar por patente, cliente o marca..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load(search, estado)} className="min-w-40 flex-1" />
             <Select
               items={{ todos: 'Todos', ...Object.fromEntries(Object.entries(ESTADOS).map(([k, s]) => [k, s.label])) }}
               value={estado || 'todos'}
               onValueChange={(v) => { const val = (v === 'todos' || !v) ? '' : String(v); setEstado(val); load(search, val); }}
             >
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-40 sm:w-48">
                 <SelectValue placeholder="Todos los estados" />
               </SelectTrigger>
               <SelectContent>
@@ -49,7 +49,8 @@ export default function Vehiculos() {
             </Select>
             <Button variant="outline" onClick={() => load(search, estado)}><Search className="h-4 w-4" /></Button>
           </div>
-          <Table>
+          <div className="overflow-x-auto">
+          <Table className="min-w-[720px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Patente</TableHead>
@@ -80,6 +81,7 @@ export default function Vehiculos() {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -128,6 +128,15 @@ CREATE TABLE IF NOT EXISTS configuracion (
     descripcion VARCHAR(200)
 );
 
+CREATE TABLE IF NOT EXISTS estado_historial (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    vehiculo_id INT NOT NULL,
+    estado ENUM('recibido','presupuesto','aprobado','desabolladura','pintura','control_calidad','listo','entregado') NOT NULL,
+    usuario VARCHAR(150),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS cotizaciones_enviadas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     vehiculo_id INT NOT NULL,
