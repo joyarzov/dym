@@ -128,6 +128,18 @@ CREATE TABLE IF NOT EXISTS configuracion (
     descripcion VARCHAR(200)
 );
 
+CREATE TABLE IF NOT EXISTS accesos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NULL,
+    username VARCHAR(50),
+    nombre VARCHAR(150),
+    ip VARCHAR(64),
+    user_agent VARCHAR(300),
+    exito TINYINT(1) DEFAULT 1,
+    motivo VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS estado_historial (
     id INT AUTO_INCREMENT PRIMARY KEY,
     vehiculo_id INT NOT NULL,

@@ -1,7 +1,7 @@
 import { useEffect, useState, Fragment, type FormEvent } from 'react';
 import api from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import type { Usuario, Rol } from '@/lib/types';
+import type { Usuario, Rol, Acceso } from '@/lib/types';
 import { ROL_LABEL } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,11 +22,15 @@ export default function Usuarios() {
   const [saving, setSaving] = useState(false);
   const [pwUser, setPwUser] = useState<number | null>(null);
   const [pwValue, setPwValue] = useState('');
+  const [accesos, setAccesos] = useState<Acceso[] | null>(null);
 
   function load() {
     api.get<Usuario[]>('/usuarios').then((r) => setUsuarios(r.data));
   }
-  useEffect(load, []);
+  useEffect(() => {
+    load();
+    api.get<Acceso[]>('/usuarios/accesos').then((r) => setAccesos(r.data)).catch(() => setAccesos([]));
+  }, []);
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
@@ -214,6 +218,63 @@ export default function Usuarios() {
                     </TableRow>
                   )}
                   </Fragment>
+                ))}
+              </TableBody>
+            </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <div>
+        <h2 className="text-lg font-semibold tracking-tight">Registro de accesos</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Inicios de sesión e intentos fallidos (últimos 200).</p>
+      </div>
+      <Card>
+        <CardContent className="p-0">
+          {accesos === null ? (
+            <div className="space-y-2 p-6">
+              {[0, 1, 2].map((i) => <div key={i} className="h-10 animate-pulse rounded-md bg-muted" />)}
+            </div>
+          ) : accesos.length === 0 ? (
+            <p className="py-12 text-center text-muted-foreground">Sin registros de acceso</p>
+          ) : (
+            <div className="overflow-x-auto">
+            <Table className="min-w-[720px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fecha y hora</TableHead>
+                  <TableHead>Usuario</TableHead>
+                  <TableHead>Resultado</TableHead>
+                  <TableHead>IP</TableHead>
+                  <TableHead>Dispositivo</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {accesos.map((a) => (
+                  <TableRow key={a.id}>
+                    <TableCell className="whitespace-nowrap text-muted-foreground">
+                      {new Date(String(a.created_at).replace(' ', 'T')).toLocaleString('es-CL')}
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-medium">{a.username || '—'}</span>
+                      {a.nombre && <span className="text-muted-foreground"> · {a.nombre}</span>}
+                    </TableCell>
+                    <TableCell>
+                      {a.exito ? (
+                        <Badge className="bg-success text-white">Éxito</Badge>
+                      ) : (
+                        <Badge className="bg-destructive text-white" title={a.motivo}>Fallido</Badge>
+                      )}
+                      {!a.exito && a.motivo && (
+                        <span className="ml-2 text-xs text-muted-foreground">{a.motivo}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="tabular-nums">{a.ip || '—'}</TableCell>
+                    <TableCell className="max-w-[280px] truncate text-xs text-muted-foreground" title={a.user_agent}>
+                      {a.user_agent || '—'}
+                    </TableCell>
+                  </TableRow>
                 ))}
               </TableBody>
             </Table>

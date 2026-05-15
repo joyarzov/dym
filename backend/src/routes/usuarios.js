@@ -21,6 +21,21 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Registro de accesos (logins) — solo superusuario
+router.get('/accesos', async (req, res) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 200, 500);
+    const [rows] = await db.query(
+      `SELECT id, usuario_id, username, nombre, ip, user_agent, exito, motivo, created_at
+       FROM accesos ORDER BY created_at DESC, id DESC LIMIT ?`,
+      [limit]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/', async (req, res) => {
   try {
     const { username, password, nombre_completo, email, rol } = req.body;

@@ -18,6 +18,18 @@ export interface Usuario {
   created_at: string;
 }
 
+export interface Acceso {
+  id: number;
+  usuario_id: number | null;
+  username: string;
+  nombre: string;
+  ip: string;
+  user_agent: string;
+  exito: number;
+  motivo: string;
+  created_at: string;
+}
+
 export const ROL_LABEL: Record<Rol, string> = {
   admin: 'Administrador',
   superusuario: 'Superusuario',
