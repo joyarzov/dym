@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import api from '@/lib/api';
-import type { Pago, Vehiculo } from '@/lib/types';
+import type { Pago, PagoOpcion } from '@/lib/types';
 import { formatMoney, formatDate } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,41 +17,58 @@ const empty = { vehiculo_id: '', monto: '', metodo_pago: 'transferencia', tipo: 
 
 export default function Pagos() {
   const [pagos, setPagos] = useState<Pago[]>([]);
-  const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
+  const [opciones, setOpciones] = useState<PagoOpcion[]>([]);
   const [form, setForm] = useState<Record<string, string>>(empty);
   const [open, setOpen] = useState(false);
+  const [confirmExceso, setConfirmExceso] = useState(false);
 
   function load() { api.get('/pagos').then((r) => setPagos(r.data)); }
+  function loadOpciones() { api.get('/pagos/opciones').then((r) => setOpciones(r.data)); }
 
   useEffect(() => {
     load();
-    api.get('/vehiculos').then((r) => setVehiculos(r.data));
+    loadOpciones();
   }, []);
 
   function set(k: string, v: string) { setForm((p) => ({ ...p, [k]: v })); }
 
   const vehiculoItems = Object.fromEntries(
-    vehiculos.map((v) => [String(v.id), `${v.patente} — ${v.cliente_nombre}`])
+    opciones.map((o) => [
+      String(o.id),
+      `OT ${String(o.id).padStart(5, '0')} · ${o.patente} · ${o.cliente_nombre} · saldo ${formatMoney(o.saldo)}`,
+    ])
   );
   const metodoItems = { transferencia: 'Transferencia', tarjeta_debito: 'Tarjeta Débito', tarjeta_credito: 'Tarjeta Crédito' };
   const tipoItems = { anticipo: 'Anticipo', abono: 'Abono', pago_final: 'Pago Final' };
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!form.vehiculo_id) {
-      toast.error('Selecciona un vehículo');
-      return;
-    }
+  const opcionSel = opciones.find((o) => String(o.id) === String(form.vehiculo_id));
+
+  async function doSubmit() {
     try {
       await api.post('/pagos', form);
       toast.success('Pago registrado');
       setForm(empty);
       setOpen(false);
+      setConfirmExceso(false);
       load();
+      loadOpciones();
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'No se pudo registrar el pago';
       toast.error(msg);
     }
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!form.vehiculo_id) {
+      toast.error('Selecciona una orden de trabajo');
+      return;
+    }
+    if (opcionSel && Number(form.monto) > opcionSel.saldo) {
+      setConfirmExceso(true);
+      return;
+    }
+    doSubmit();
   }
 
   async function handleDelete(id: number) {
@@ -59,6 +76,7 @@ export default function Pagos() {
     await api.delete(`/pagos/${id}`);
     toast.success('Pago eliminado');
     load();
+    loadOpciones();
   }
 
   return (
@@ -70,11 +88,21 @@ export default function Pagos() {
           <DialogContent>
             <DialogHeader><DialogTitle>Registrar Pago</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2"><Label>Vehículo</Label>
+              <div className="space-y-2"><Label>Orden de trabajo</Label>
                 <Select items={vehiculoItems} value={form.vehiculo_id} onValueChange={(v) => { if (v) set('vehiculo_id', String(v)); }}>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Seleccionar…" /></SelectTrigger>
-                  <SelectContent>{vehiculos.map((v) => <SelectItem key={v.id} value={String(v.id)}>{v.patente} — {v.cliente_nombre}</SelectItem>)}</SelectContent>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Seleccionar OT…" /></SelectTrigger>
+                  <SelectContent>{opciones.map((o) => (
+                    <SelectItem key={o.id} value={String(o.id)}>
+                      OT {String(o.id).padStart(5, '0')} · {o.patente} · {o.cliente_nombre} · {formatDate(o.fecha_ingreso)} · saldo {formatMoney(o.saldo)}
+                    </SelectItem>
+                  ))}</SelectContent>
                 </Select>
+                {opcionSel && (
+                  <p className="text-xs text-muted-foreground">
+                    Presupuesto {formatMoney(opcionSel.presupuesto)} · pagado {formatMoney(opcionSel.pagado)} ·{' '}
+                    <span className={opcionSel.saldo > 0 ? 'text-destructive' : 'text-success'}>saldo {formatMoney(opcionSel.saldo)}</span>
+                  </p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>Monto</Label><Input type="number" value={form.monto} onChange={(e) => set('monto', e.target.value)} required /></div>
@@ -134,6 +162,21 @@ export default function Pagos() {
         </Table>
         </div>
       </CardContent></Card>
+
+      <Dialog open={confirmExceso} onOpenChange={setConfirmExceso}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle>El pago supera el saldo</DialogTitle></DialogHeader>
+          <p className="text-sm">
+            El monto <span className="font-semibold">{formatMoney(Number(form.monto))}</span> es mayor que el
+            saldo pendiente de esta OT (<span className="font-semibold">{formatMoney(opcionSel?.saldo ?? 0)}</span>).
+            ¿Registrar el pago de todas formas?
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setConfirmExceso(false)}>No</Button>
+            <Button onClick={doSubmit}>Sí, registrar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

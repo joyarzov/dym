@@ -197,6 +197,19 @@ export interface CotizacionEnviada {
   created_at: string;
 }
 
+export interface PagoOpcion {
+  id: number;
+  patente: string;
+  marca: string;
+  modelo: string;
+  estado: EstadoVehiculo;
+  fecha_ingreso: string;
+  presupuesto: number;
+  pagado: number;
+  saldo: number;
+  cliente_nombre: string;
+}
+
 export interface DashboardData {
   totalVehiculos: number;
   enTaller: number;

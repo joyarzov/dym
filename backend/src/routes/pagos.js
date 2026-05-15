@@ -21,6 +21,25 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Opciones de OT para registrar pagos, con saldo (definir antes de /:id)
+router.get('/opciones', async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT v.id, v.patente, v.marca, v.modelo, v.estado, v.fecha_ingreso,
+              v.presupuesto_estimado AS presupuesto, c.nombre AS cliente_nombre,
+              COALESCE((SELECT SUM(monto) FROM pagos WHERE vehiculo_id = v.id), 0) AS pagado
+       FROM vehiculos v JOIN clientes c ON c.id = v.cliente_id
+       ORDER BY v.fecha_ingreso DESC, v.id DESC`
+    );
+    res.json(rows.map((r) => ({
+      ...r,
+      saldo: Number(r.presupuesto) - Number(r.pagado),
+    })));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const [rows] = await db.query(

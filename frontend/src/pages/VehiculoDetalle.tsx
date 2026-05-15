@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '@/lib/api';
 import type { Vehiculo } from '@/lib/types';
@@ -6,12 +6,14 @@ import { ESTADOS, formatMoney, formatDate } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Pencil, ArrowLeft, ImageIcon, FileText, RotateCcw } from 'lucide-react';
+import { Pencil, ArrowLeft, ImageIcon, FileText, RotateCcw, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function VehiculoDetalle() {
@@ -38,6 +40,39 @@ export default function VehiculoDetalle() {
     } finally {
       setPendEstado(null);
     }
+  }
+
+  const pagoVacio = {
+    monto: '', metodo_pago: 'transferencia', tipo: 'abono',
+    referencia: '', fecha_pago: new Date().toISOString().split('T')[0],
+  };
+  const [pagoOpen, setPagoOpen] = useState(false);
+  const [pagoForm, setPagoForm] = useState(pagoVacio);
+  const [pagoConfirm, setPagoConfirm] = useState(false);
+
+  const saldo = (Number(v?.presupuesto_estimado) || 0) - (Number(v?.totalPagado) || 0);
+
+  function setPF(k: string, val: string) { setPagoForm((p) => ({ ...p, [k]: val })); }
+
+  async function doRegistrarPago() {
+    try {
+      await api.post('/pagos', { ...pagoForm, vehiculo_id: id });
+      toast.success('Pago registrado');
+      setPagoForm(pagoVacio);
+      setPagoOpen(false);
+      setPagoConfirm(false);
+      load();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'No se pudo registrar el pago';
+      toast.error(msg);
+    }
+  }
+
+  function submitPago(e: FormEvent) {
+    e.preventDefault();
+    if (!pagoForm.monto || Number(pagoForm.monto) <= 0) { toast.error('Indica el monto'); return; }
+    if (Number(pagoForm.monto) > saldo) { setPagoConfirm(true); return; }
+    doRegistrarPago();
   }
 
   async function reingresar() {
@@ -68,8 +103,6 @@ export default function VehiculoDetalle() {
   }
 
   if (!v) return <div className="text-center py-10 text-muted-foreground">Cargando...</div>;
-
-  const saldo = v.presupuesto_estimado - (v.totalPagado || 0);
 
   return (
     <div className="space-y-6">
@@ -208,8 +241,18 @@ export default function VehiculoDetalle() {
         </TabsContent>
 
         <TabsContent value="pagos">
-          <Card><CardContent className="p-6">
-            <Table>
+          <Card><CardContent className="p-4 sm:p-6">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="text-sm">
+                <span className="text-muted-foreground">Saldo: </span>
+                <span className={`font-semibold tabular-nums ${saldo > 0 ? 'text-destructive' : 'text-success'}`}>{formatMoney(saldo)}</span>
+              </div>
+              <Button size="sm" onClick={() => { setPagoForm(pagoVacio); setPagoOpen(true); }}>
+                <DollarSign className="mr-2 h-4 w-4" />Registrar pago
+              </Button>
+            </div>
+            <div className="overflow-x-auto">
+            <Table className="min-w-[560px]">
               <TableHeader><TableRow>
                 <TableHead>Fecha</TableHead><TableHead>Tipo</TableHead><TableHead>Método</TableHead>
                 <TableHead>Monto</TableHead><TableHead>Referencia</TableHead>
@@ -227,6 +270,7 @@ export default function VehiculoDetalle() {
                 {!v.pagos?.length && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-4">Sin pagos registrados</TableCell></TableRow>}
               </TableBody>
             </Table>
+            </div>
             <p className="text-right mt-4 font-bold">Total pagado: {formatMoney(v.totalPagado || 0)}</p>
           </CardContent></Card>
         </TabsContent>
@@ -360,6 +404,63 @@ export default function VehiculoDetalle() {
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => setPendEstado(null)}>No</Button>
             <Button onClick={confirmarCambioEstado}>Sí, cambiar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={pagoOpen} onOpenChange={setPagoOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Registrar pago · OT {String(v.id).padStart(5, '0')}</DialogTitle></DialogHeader>
+          <form onSubmit={submitPago} className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {v.patente} · {v.cliente_nombre} · saldo{' '}
+              <span className={saldo > 0 ? 'font-medium text-destructive' : 'font-medium text-success'}>{formatMoney(saldo)}</span>
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Monto</Label><Input type="number" value={pagoForm.monto} onChange={(e) => setPF('monto', e.target.value)} required /></div>
+              <div className="space-y-2"><Label>Fecha</Label><Input type="date" value={pagoForm.fecha_pago} onChange={(e) => setPF('fecha_pago', e.target.value)} required /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Método</Label>
+                <Select items={{ transferencia: 'Transferencia', tarjeta_debito: 'Tarjeta Débito', tarjeta_credito: 'Tarjeta Crédito' }} value={pagoForm.metodo_pago} onValueChange={(x) => { if (x) setPF('metodo_pago', String(x)); }}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="transferencia">Transferencia</SelectItem>
+                    <SelectItem value="tarjeta_debito">Tarjeta Débito</SelectItem>
+                    <SelectItem value="tarjeta_credito">Tarjeta Crédito</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2"><Label>Tipo</Label>
+                <Select items={{ anticipo: 'Anticipo', abono: 'Abono', pago_final: 'Pago Final' }} value={pagoForm.tipo} onValueChange={(x) => { if (x) setPF('tipo', String(x)); }}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="anticipo">Anticipo</SelectItem>
+                    <SelectItem value="abono">Abono</SelectItem>
+                    <SelectItem value="pago_final">Pago Final</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2"><Label>Referencia</Label><Input value={pagoForm.referencia} onChange={(e) => setPF('referencia', e.target.value)} placeholder="N° transferencia, etc." /></div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => setPagoOpen(false)}>Cancelar</Button>
+              <Button type="submit">Registrar</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={pagoConfirm} onOpenChange={setPagoConfirm}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle>El pago supera el saldo</DialogTitle></DialogHeader>
+          <p className="text-sm">
+            El monto <span className="font-semibold">{formatMoney(Number(pagoForm.monto))}</span> es mayor que el
+            saldo de esta OT (<span className="font-semibold">{formatMoney(saldo)}</span>). ¿Registrar de todas formas?
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setPagoConfirm(false)}>No</Button>
+            <Button onClick={doRegistrarPago}>Sí, registrar</Button>
           </div>
         </DialogContent>
       </Dialog>
