@@ -99,6 +99,9 @@ export interface Pieza {
   vehiculo_id: number;
   proveedor_id: number;
   proveedor_nombre?: string;
+  patente?: string;
+  marca?: string;
+  modelo?: string;
   nombre_pieza: string;
   tipo_trabajo: 'reparacion' | 'reemplazo' | 'pintura' | 'desabolladura';
   descripcion: string;
@@ -121,6 +124,33 @@ export interface Pago {
   referencia: string;
   notas: string;
   fecha_pago: string;
+}
+
+export interface ManoObra {
+  id: number;
+  vehiculo_id: number;
+  descripcion: string;
+  horas: number;
+  valor_hora: number;
+  total: number;
+}
+
+export interface Cotizacion {
+  empresa: string;
+  fecha: string;
+  vehiculo: Vehiculo & {
+    cliente_email?: string;
+    cliente_direccion?: string;
+  };
+  piezas: Pieza[];
+  manoObra: ManoObra[];
+  totales: {
+    subtotalPiezas: number;
+    subtotalManoObra: number;
+    neto: number;
+    iva: number;
+    total: number;
+  };
 }
 
 export interface DashboardData {
@@ -149,7 +179,11 @@ export function formatMoney(amount: number): string {
   return '$ ' + new Intl.NumberFormat('es-CL').format(amount);
 }
 
-export function formatDate(date: string): string {
+export function formatDate(date: string | null | undefined): string {
   if (!date) return '-';
-  return new Date(date + 'T12:00:00').toLocaleDateString('es-CL');
+  // Acepta 'YYYY-MM-DD', 'YYYY-MM-DD HH:mm:ss' o ISO; usa solo la parte de fecha.
+  const ymd = String(date).slice(0, 10);
+  const d = new Date(ymd + 'T12:00:00');
+  if (Number.isNaN(d.getTime())) return '-';
+  return d.toLocaleDateString('es-CL');
 }

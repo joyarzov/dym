@@ -32,7 +32,11 @@ export default function Vehiculos() {
         <CardContent className="p-6">
           <div className="flex gap-2 mb-4">
             <Input placeholder="Buscar por patente, cliente o marca..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load(search, estado)} className="flex-1" />
-            <Select value={estado} onValueChange={(v) => { const val = (v === 'todos' || !v) ? '' : v; setEstado(val); load(search, val); }}>
+            <Select
+              items={{ todos: 'Todos', ...Object.fromEntries(Object.entries(ESTADOS).map(([k, s]) => [k, s.label])) }}
+              value={estado || 'todos'}
+              onValueChange={(v) => { const val = (v === 'todos' || !v) ? '' : String(v); setEstado(val); load(search, val); }}
+            >
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Todos los estados" />
               </SelectTrigger>

@@ -175,3 +175,30 @@
     background: transparent;
   }
 }
+
+/* Impresión de cotizaciones: solo el documento, en claro */
+@media print {
+  aside,
+  header {
+    display: none !important;
+  }
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    background-image: none !important;
+  }
+  main {
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+  .print\:hidden {
+    display: none !important;
+  }
+  .print-document {
+    color: #000 !important;
+  }
+  .print-document * {
+    color: #000 !important;
+    border-color: #d1d5db !important;
+  }
+}

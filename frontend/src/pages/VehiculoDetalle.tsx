@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Pencil, ArrowLeft, ImageIcon } from 'lucide-react';
+import { Pencil, ArrowLeft, ImageIcon, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function VehiculoDetalle() {
@@ -61,10 +61,15 @@ export default function VehiculoDetalle() {
           </div>
         </div>
         <div className="flex gap-2 items-center">
-          <Select value={v.estado} onValueChange={cambiarEstado}>
+          <Select
+            items={Object.fromEntries(Object.entries(ESTADOS).map(([k, s]) => [k, s.label]))}
+            value={v.estado}
+            onValueChange={(val) => cambiarEstado(val as string)}
+          >
             <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
             <SelectContent>{Object.entries(ESTADOS).map(([k, s]) => <SelectItem key={k} value={k}>{s.label}</SelectItem>)}</SelectContent>
           </Select>
+          <Link to={`/vehiculos/${id}/cotizacion`}><Button variant="outline"><FileText className="h-4 w-4 mr-2" />Cotización</Button></Link>
           <Link to={`/vehiculos/${id}/editar`}><Button variant="outline"><Pencil className="h-4 w-4 mr-2" />Editar</Button></Link>
         </div>
       </div>

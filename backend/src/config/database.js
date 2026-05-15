@@ -9,6 +9,9 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   charset: 'utf8mb4',
+  // Devuelve DATE/DATETIME como string 'YYYY-MM-DD ...' en vez de objeto Date,
+  // evitando fechas inválidas al serializar a JSON.
+  dateStrings: true,
 });
 
 export default pool;

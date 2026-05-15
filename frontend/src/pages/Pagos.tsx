@@ -30,13 +30,28 @@ export default function Pagos() {
 
   function set(k: string, v: string) { setForm((p) => ({ ...p, [k]: v })); }
 
+  const vehiculoItems = Object.fromEntries(
+    vehiculos.map((v) => [String(v.id), `${v.patente} — ${v.cliente_nombre}`])
+  );
+  const metodoItems = { transferencia: 'Transferencia', tarjeta_debito: 'Tarjeta Débito', tarjeta_credito: 'Tarjeta Crédito' };
+  const tipoItems = { anticipo: 'Anticipo', abono: 'Abono', pago_final: 'Pago Final' };
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    await api.post('/pagos', form);
-    toast.success('Pago registrado');
-    setForm(empty);
-    setOpen(false);
-    load();
+    if (!form.vehiculo_id) {
+      toast.error('Selecciona un vehículo');
+      return;
+    }
+    try {
+      await api.post('/pagos', form);
+      toast.success('Pago registrado');
+      setForm(empty);
+      setOpen(false);
+      load();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'No se pudo registrar el pago';
+      toast.error(msg);
+    }
   }
 
   async function handleDelete(id: number) {
@@ -56,9 +71,9 @@ export default function Pagos() {
             <DialogHeader><DialogTitle>Registrar Pago</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2"><Label>Vehículo</Label>
-                <Select value={form.vehiculo_id} onValueChange={(v) => { if (v) set('vehiculo_id', v); }}>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
-                  <SelectContent>{vehiculos.map((v) => <SelectItem key={v.id} value={String(v.id)}>{v.patente} - {v.cliente_nombre}</SelectItem>)}</SelectContent>
+                <Select items={vehiculoItems} value={form.vehiculo_id} onValueChange={(v) => { if (v) set('vehiculo_id', String(v)); }}>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Seleccionar…" /></SelectTrigger>
+                  <SelectContent>{vehiculos.map((v) => <SelectItem key={v.id} value={String(v.id)}>{v.patente} — {v.cliente_nombre}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -67,8 +82,8 @@ export default function Pagos() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>Método</Label>
-                  <Select value={form.metodo_pago} onValueChange={(v) => { if (v) set('metodo_pago', v); }}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select items={metodoItems} value={form.metodo_pago} onValueChange={(v) => { if (v) set('metodo_pago', String(v)); }}>
+                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="transferencia">Transferencia</SelectItem>
                       <SelectItem value="tarjeta_debito">Tarjeta Débito</SelectItem>
@@ -77,8 +92,8 @@ export default function Pagos() {
                   </Select>
                 </div>
                 <div className="space-y-2"><Label>Tipo</Label>
-                  <Select value={form.tipo} onValueChange={(v) => { if (v) set('tipo', v); }}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select items={tipoItems} value={form.tipo} onValueChange={(v) => { if (v) set('tipo', String(v)); }}>
+                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="anticipo">Anticipo</SelectItem>
                       <SelectItem value="abono">Abono</SelectItem>

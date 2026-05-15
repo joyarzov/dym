@@ -6,7 +6,7 @@ const router = Router();
 router.get('/', async (req, res) => {
   try {
     const { vehiculo_id } = req.query;
-    let query = 'SELECT p.*, pr.razon_social as proveedor_nombre FROM piezas p LEFT JOIN proveedores pr ON pr.id = p.proveedor_id';
+    let query = 'SELECT p.*, pr.razon_social as proveedor_nombre, v.patente, v.marca, v.modelo FROM piezas p LEFT JOIN proveedores pr ON pr.id = p.proveedor_id LEFT JOIN vehiculos v ON v.id = p.vehiculo_id';
     const params = [];
     if (vehiculo_id) {
       query += ' WHERE p.vehiculo_id = ?';

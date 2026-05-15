@@ -32,13 +32,35 @@ export default function Piezas() {
 
   function set(k: string, v: string) { setForm((p) => ({ ...p, [k]: v })); }
 
+  const vehiculoItems = Object.fromEntries(
+    vehiculos.map((v) => [String(v.id), `${v.patente} — ${v.marca} ${v.modelo}`])
+  );
+  const proveedorItems = Object.fromEntries(
+    proveedores.map((p) => [String(p.id), p.razon_social])
+  );
+  const tipoItems = {
+    reparacion: 'Reparación',
+    reemplazo: 'Reemplazo',
+    pintura: 'Pintura',
+    desabolladura: 'Desabolladura',
+  };
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    await api.post('/piezas', form);
-    toast.success('Pieza creada');
-    setForm(empty);
-    setOpen(false);
-    load();
+    if (!form.vehiculo_id) {
+      toast.error('Selecciona un vehículo');
+      return;
+    }
+    try {
+      await api.post('/piezas', form);
+      toast.success('Pieza creada');
+      setForm(empty);
+      setOpen(false);
+      load();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'No se pudo crear la pieza';
+      toast.error(msg);
+    }
   }
 
   async function handleDelete(id: number) {
@@ -58,16 +80,16 @@ export default function Piezas() {
             <DialogHeader><DialogTitle>Nueva Pieza</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2"><Label>Vehículo</Label>
-                <Select value={form.vehiculo_id} onValueChange={(v) => { if (v) set('vehiculo_id', v); }}>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
-                  <SelectContent>{vehiculos.map((v) => <SelectItem key={v.id} value={String(v.id)}>{v.patente} - {v.marca} {v.modelo}</SelectItem>)}</SelectContent>
+                <Select items={vehiculoItems} value={form.vehiculo_id} onValueChange={(v) => { if (v) set('vehiculo_id', String(v)); }}>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Seleccionar…" /></SelectTrigger>
+                  <SelectContent>{vehiculos.map((v) => <SelectItem key={v.id} value={String(v.id)}>{v.patente} — {v.marca} {v.modelo}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-2"><Label>Nombre Pieza</Label><Input value={form.nombre_pieza} onChange={(e) => set('nombre_pieza', e.target.value)} required /></div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>Tipo Trabajo</Label>
-                  <Select value={form.tipo_trabajo} onValueChange={(v) => { if (v) set('tipo_trabajo', v); }}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select items={tipoItems} value={form.tipo_trabajo} onValueChange={(v) => { if (v) set('tipo_trabajo', String(v)); }}>
+                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="reparacion">Reparación</SelectItem>
                       <SelectItem value="reemplazo">Reemplazo</SelectItem>
@@ -77,8 +99,8 @@ export default function Piezas() {
                   </Select>
                 </div>
                 <div className="space-y-2"><Label>Proveedor</Label>
-                  <Select value={form.proveedor_id} onValueChange={(v) => { if (v) set('proveedor_id', v); }}>
-                    <SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger>
+                  <Select items={proveedorItems} value={form.proveedor_id} onValueChange={(v) => set('proveedor_id', v ? String(v) : '')}>
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Opcional" /></SelectTrigger>
                     <SelectContent>{proveedores.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.razon_social}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
@@ -103,7 +125,7 @@ export default function Piezas() {
             {piezas.map((p) => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.nombre_pieza}</TableCell>
-                <TableCell>{p.vehiculo_id}</TableCell>
+                <TableCell>{p.patente ? `${p.patente} — ${p.marca} ${p.modelo}` : '—'}</TableCell>
                 <TableCell>{p.tipo_trabajo}</TableCell>
                 <TableCell>{p.cantidad}</TableCell>
                 <TableCell>{formatMoney(p.costo_total)}</TableCell>
