@@ -19,16 +19,14 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { vehiculo_id, descripcion, horas, valor_hora } = req.body;
+    const { vehiculo_id, descripcion, valor } = req.body;
     if (!vehiculo_id || !descripcion) {
       return res.status(400).json({ error: 'Vehículo y descripción son obligatorios' });
     }
-    const h = Number(horas) || 1;
-    const vh = Number(valor_hora) || 0;
-    const total = Math.round(h * vh);
+    const monto = Math.round(Number(valor) || 0);
     const [result] = await db.query(
-      'INSERT INTO mano_obra (vehiculo_id, descripcion, horas, valor_hora, total) VALUES (?,?,?,?,?)',
-      [vehiculo_id, descripcion, h, vh, total]
+      'INSERT INTO mano_obra (vehiculo_id, descripcion, valor) VALUES (?,?,?)',
+      [vehiculo_id, descripcion, monto]
     );
     res.status(201).json({ id: result.insertId, message: 'Mano de obra agregada' });
   } catch (err) {

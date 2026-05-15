@@ -12,7 +12,7 @@ import { LogoMark } from '@/components/Logo';
 import { toast } from 'sonner';
 
 const emptyPieza = { nombre_pieza: '', cantidad: '1', costo_unitario: '0' };
-const emptyMo = { descripcion: '', horas: '1', valor_hora: '0' };
+const emptyMo = { descripcion: '', valor: '0' };
 
 export default function Cotizacion() {
   const { id } = useParams();
@@ -111,15 +111,11 @@ export default function Cotizacion() {
             <form onSubmit={addMo} className="flex flex-wrap items-end gap-3">
               <div className="min-w-40 flex-1 space-y-1">
                 <label className="text-xs text-muted-foreground">Trabajo</label>
-                <Input value={mo.descripcion} onChange={(e) => setMo({ ...mo, descripcion: e.target.value })} />
+                <Input value={mo.descripcion} onChange={(e) => setMo({ ...mo, descripcion: e.target.value })} placeholder="Ej: Desabolladura y pintura puerta delantera" />
               </div>
-              <div className="w-20 space-y-1">
-                <label className="text-xs text-muted-foreground">Horas</label>
-                <Input type="number" min="0" step="0.5" value={mo.horas} onChange={(e) => setMo({ ...mo, horas: e.target.value })} />
-              </div>
-              <div className="w-32 space-y-1">
-                <label className="text-xs text-muted-foreground">Valor hora</label>
-                <Input type="number" min="0" value={mo.valor_hora} onChange={(e) => setMo({ ...mo, valor_hora: e.target.value })} />
+              <div className="w-40 space-y-1">
+                <label className="text-xs text-muted-foreground">Valor (CLP)</label>
+                <Input type="number" min="0" value={mo.valor} onChange={(e) => setMo({ ...mo, valor: e.target.value })} />
               </div>
               <Button type="submit"><Plus className="mr-1 h-4 w-4" />Agregar</Button>
             </form>
@@ -199,21 +195,17 @@ export default function Cotizacion() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Trabajo</TableHead>
-                  <TableHead className="text-right">Horas</TableHead>
-                  <TableHead className="text-right">Valor hora</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
                   <TableHead className="w-10 print:hidden" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {cot.manoObra.length === 0 ? (
-                  <TableRow><TableCell colSpan={5} className="py-4 text-center text-muted-foreground">Sin mano de obra</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={3} className="py-4 text-center text-muted-foreground">Sin mano de obra</TableCell></TableRow>
                 ) : cot.manoObra.map((m) => (
                   <TableRow key={m.id}>
                     <TableCell>{m.descripcion}</TableCell>
-                    <TableCell className="text-right tabular-nums">{m.horas}</TableCell>
-                    <TableCell className="text-right tabular-nums">{formatMoney(m.valor_hora)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{formatMoney(m.total)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatMoney(m.valor)}</TableCell>
                     <TableCell className="print:hidden">
                       <Button variant="ghost" size="icon" onClick={() => delMo(m.id)} aria-label="Eliminar">
                         <Trash2 className="h-4 w-4 text-destructive" />

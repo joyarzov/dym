@@ -26,7 +26,7 @@ router.post('/', async (req, res) => {
     const costoTotal = (Number(cantidad) || 1) * (Number(costo_unitario) || 0);
     const [result] = await db.query(
       'INSERT INTO piezas (vehiculo_id, proveedor_id, nombre_pieza, tipo_trabajo, descripcion, cantidad, costo_unitario, costo_total, fecha_inicio) VALUES (?,?,?,?,?,?,?,?,?)',
-      [vehiculo_id, proveedor_id || null, nombre_pieza, tipo_trabajo, descripcion, cantidad || 1, costo_unitario || 0, costoTotal, fecha_inicio]
+      [vehiculo_id, proveedor_id || null, nombre_pieza, tipo_trabajo, descripcion, cantidad || 1, costo_unitario || 0, costoTotal, fecha_inicio || null]
     );
     res.status(201).json({ id: result.insertId, message: 'Pieza creada' });
   } catch (err) {
@@ -40,7 +40,7 @@ router.put('/:id', async (req, res) => {
     const costoTotal = (Number(cantidad) || 1) * (Number(costo_unitario) || 0);
     await db.query(
       'UPDATE piezas SET proveedor_id=?, nombre_pieza=?, tipo_trabajo=?, descripcion=?, cantidad=?, costo_unitario=?, costo_total=?, estado=?, fecha_inicio=?, fecha_fin=? WHERE id=?',
-      [proveedor_id || null, nombre_pieza, tipo_trabajo, descripcion, cantidad, costo_unitario, costoTotal, estado, fecha_inicio, fecha_fin, req.params.id]
+      [proveedor_id || null, nombre_pieza, tipo_trabajo, descripcion, cantidad, costo_unitario, costoTotal, estado, fecha_inicio || null, fecha_fin || null, req.params.id]
     );
     res.json({ message: 'Pieza actualizada' });
   } catch (err) {

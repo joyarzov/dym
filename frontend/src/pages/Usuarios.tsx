@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, Fragment, type FormEvent } from 'react';
 import api from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Usuario, Rol } from '@/lib/types';
@@ -20,6 +20,8 @@ export default function Usuarios() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
+  const [pwUser, setPwUser] = useState<number | null>(null);
+  const [pwValue, setPwValue] = useState('');
 
   function load() {
     api.get<Usuario[]>('/usuarios').then((r) => setUsuarios(r.data));
@@ -40,6 +42,23 @@ export default function Usuarios() {
       toast.error(msg);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function changePassword(e: FormEvent, u: Usuario) {
+    e.preventDefault();
+    if (pwValue.length < 6) {
+      toast.error('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+    try {
+      await api.patch(`/usuarios/${u.id}`, { password: pwValue });
+      toast.success(`Contraseña de ${u.username} actualizada`);
+      setPwUser(null);
+      setPwValue('');
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'No se pudo cambiar la contraseña';
+      toast.error(msg);
     }
   }
 
@@ -134,7 +153,8 @@ export default function Usuarios() {
               </TableHeader>
               <TableBody>
                 {usuarios.map((u) => (
-                  <TableRow key={u.id}>
+                  <Fragment key={u.id}>
+                  <TableRow>
                     <TableCell className="font-medium">{u.nombre_completo}</TableCell>
                     <TableCell className="text-muted-foreground">{u.username}</TableCell>
                     <TableCell className="text-muted-foreground">{u.email || '—'}</TableCell>
@@ -150,7 +170,17 @@ export default function Usuarios() {
                         <span className="text-sm text-muted-foreground">Inactivo</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right whitespace-nowrap">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setPwUser(pwUser === u.id ? null : u.id);
+                          setPwValue('');
+                        }}
+                      >
+                        Contraseña
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -161,6 +191,28 @@ export default function Usuarios() {
                       </Button>
                     </TableCell>
                   </TableRow>
+                  {pwUser === u.id && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="bg-muted/40">
+                        <form onSubmit={(e) => changePassword(e, u)} className="flex flex-wrap items-end gap-3 py-1">
+                          <div className="min-w-56 flex-1 space-y-1">
+                            <Label htmlFor={`pw-${u.id}`}>Nueva contraseña para {u.nombre_completo}</Label>
+                            <Input
+                              id={`pw-${u.id}`}
+                              type="text"
+                              autoComplete="new-password"
+                              value={pwValue}
+                              onChange={(e) => setPwValue(e.target.value)}
+                              placeholder="Mínimo 6 caracteres"
+                            />
+                          </div>
+                          <Button type="submit">Guardar contraseña</Button>
+                          <Button type="button" variant="ghost" onClick={() => setPwUser(null)}>Cancelar</Button>
+                        </form>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  </Fragment>
                 ))}
               </TableBody>
             </Table>

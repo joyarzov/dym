@@ -130,9 +130,7 @@ export interface ManoObra {
   id: number;
   vehiculo_id: number;
   descripcion: string;
-  horas: number;
-  valor_hora: number;
-  total: number;
+  valor: number;
 }
 
 export interface Cotizacion {
@@ -175,8 +173,13 @@ export const ESTADOS: Record<EstadoVehiculo, { label: string; color: string }> =
   entregado: { label: 'Entregado', color: 'bg-gray-700' },
 };
 
-export function formatMoney(amount: number): string {
-  return '$ ' + new Intl.NumberFormat('es-CL').format(amount);
+export function formatMoney(amount: number | string | null | undefined): string {
+  const n = Number(amount) || 0;
+  return new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    maximumFractionDigits: 0,
+  }).format(n);
 }
 
 export function formatDate(date: string | null | undefined): string {

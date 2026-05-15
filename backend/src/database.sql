@@ -116,9 +116,7 @@ CREATE TABLE IF NOT EXISTS mano_obra (
     id INT AUTO_INCREMENT PRIMARY KEY,
     vehiculo_id INT NOT NULL,
     descripcion VARCHAR(250) NOT NULL,
-    horas DECIMAL(6,2) DEFAULT 1,
-    valor_hora DECIMAL(12,0) DEFAULT 0,
-    total DECIMAL(12,0) DEFAULT 0,
+    valor DECIMAL(12,0) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id) ON DELETE CASCADE
 );

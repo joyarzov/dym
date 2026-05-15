@@ -35,7 +35,7 @@ router.get('/:vehiculoId', async (req, res) => {
     cfgRows.forEach((r) => { config[r.clave] = r.valor; });
 
     const subtotalPiezas = piezas.reduce((s, p) => s + Number(p.costo_total || 0), 0);
-    const subtotalManoObra = manoObra.reduce((s, m) => s + Number(m.total || 0), 0);
+    const subtotalManoObra = manoObra.reduce((s, m) => s + Number(m.valor || 0), 0);
     const neto = subtotalPiezas + subtotalManoObra;
     const iva = Math.round(neto * 0.19);
     const total = neto + iva;

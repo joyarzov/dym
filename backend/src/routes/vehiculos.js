@@ -75,13 +75,14 @@ router.post('/', async (req, res) => {
 
     const presupuesto = Number(presupuesto_estimado) || 0;
     const montoAnticipo = presupuesto >= 1300000 ? Math.round(presupuesto * 0.5) : 0;
+    const nn = (x) => (x === '' || x === undefined ? null : x);
 
     const [result] = await db.query(
       `INSERT INTO vehiculos (cliente_id, patente, marca, modelo, anio, color, fecha_ingreso, fecha_estimada_entrega,
         estado, tiene_seguro, aseguradora, numero_poliza, numero_siniestro, nombre_ajustador, telefono_ajustador,
         presupuesto_estimado, requiere_anticipo, monto_anticipo, diagnostico, observaciones)
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [cliente_id, patente, marca, modelo, anio, color, fecha_ingreso, fecha_estimada_entrega,
+      [cliente_id, patente, marca, modelo, nn(anio), color, fecha_ingreso, nn(fecha_estimada_entrega),
         estado || 'recibido', tiene_seguro ? 1 : 0, aseguradora, numero_poliza, numero_siniestro,
         nombre_ajustador, telefono_ajustador, presupuesto, presupuesto >= 1300000 ? 1 : 0, montoAnticipo,
         diagnostico, observaciones]
@@ -103,14 +104,15 @@ router.put('/:id', async (req, res) => {
 
     const presupuesto = Number(presupuesto_estimado) || 0;
     const montoAnticipo = presupuesto >= 1300000 ? Math.round(presupuesto * 0.5) : 0;
+    const nn = (x) => (x === '' || x === undefined ? null : x);
 
     await db.query(
       `UPDATE vehiculos SET cliente_id=?, patente=?, marca=?, modelo=?, anio=?, color=?, fecha_ingreso=?,
         fecha_estimada_entrega=?, fecha_entrega_real=?, estado=?, tiene_seguro=?, aseguradora=?, numero_poliza=?,
         numero_siniestro=?, nombre_ajustador=?, telefono_ajustador=?, presupuesto_estimado=?,
         requiere_anticipo=?, monto_anticipo=?, anticipo_pagado=?, diagnostico=?, observaciones=? WHERE id=?`,
-      [cliente_id, patente, marca, modelo, anio, color, fecha_ingreso, fecha_estimada_entrega,
-        fecha_entrega_real, estado, tiene_seguro ? 1 : 0, aseguradora, numero_poliza, numero_siniestro,
+      [cliente_id, patente, marca, modelo, nn(anio), color, fecha_ingreso, nn(fecha_estimada_entrega),
+        nn(fecha_entrega_real), estado, tiene_seguro ? 1 : 0, aseguradora, numero_poliza, numero_siniestro,
         nombre_ajustador, telefono_ajustador, presupuesto, presupuesto >= 1300000 ? 1 : 0, montoAnticipo,
         anticipo_pagado ? 1 : 0, diagnostico, observaciones, req.params.id]
     );
